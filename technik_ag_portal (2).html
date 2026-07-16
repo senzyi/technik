@@ -1,0 +1,2685 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technik-AG Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 8px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 8px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .login-transition {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col m-0 p-0 overflow-x-hidden">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center p-4 z-50 login-transition opacity-100 scale-100 m-0 border-none outline-none">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl p-8 space-y-6 border border-slate-200 dark:border-slate-800">
+            <div class="text-center space-y-2">
+                <h2 class="text-3xl font-extrabold text-slate-950 dark:text-white">Schul-Portal Login</h2>
+                <p class="text-sm text-slate-700 dark:text-slate-300 font-bold">Technik-AG Verwaltung</p>
+            </div>
+
+            <!-- Login Formular mit Enter-Unterstützung -->
+            <form onsubmit="event.preventDefault(); submitPortalLogin();" class="space-y-4 pt-2">
+                <div class="space-y-3">
+                    <div>
+                        <label for="login-username" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Benutzername</label>
+                        <input type="text" id="login-username" placeholder="Benutzername" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:outline-none font-bold text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label for="login-password" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Passwort</label>
+                        <input type="password" id="login-password" placeholder="Passwort eingeben" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:outline-none font-bold text-slate-900 dark:text-white">
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="login-remember" class="w-4 h-4 text-indigo-600 border border-slate-400 dark:border-slate-600 rounded focus:ring-indigo-500 cursor-pointer">
+                        <label for="login-remember" class="ml-2 text-xs text-slate-800 dark:text-slate-200 cursor-pointer font-bold select-none font-sans">Angemeldet bleiben</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white text-sm font-extrabold rounded-xl transition-all active:scale-95 shadow-md">
+                    Anmelden
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-wrapper" class="hidden flex-col min-h-screen opacity-0 transition-opacity duration-300">
+        <!-- Header -->
+        <header class="bg-slate-950 text-white shadow-lg w-full">
+            <div class="px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 w-full">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 p-2.5 rounded-lg text-white">
+                        <i data-lucide="calendar" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-black tracking-tight text-white">Technik-AG Portal</h1>
+                    </div>
+                </div>
+                
+                <!-- Navigation Tabs -->
+                <nav class="flex bg-slate-900 p-1 rounded-lg flex-wrap gap-1 justify-center items-center border border-slate-850">
+                    <button onclick="switchTab('attendance')" id="tab-attendance" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors bg-indigo-600 text-white flex items-center gap-2">
+                        <i data-lucide="calendar-days" class="w-4 h-4"></i>
+                        Kalender
+                    </button>
+                    <button onclick="switchTab('members')" id="tab-members" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors text-slate-300 hover:text-white flex items-center gap-2">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                        Mitglieder
+                    </button>
+                    <button onclick="switchTab('events')" id="tab-events" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors text-slate-300 hover:text-white flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        Event-Planer
+                    </button>
+                    <button onclick="switchTab('admin')" id="tab-admin" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors text-slate-300 hover:text-white flex items-center gap-2">
+                        <i data-lucide="database" class="w-4 h-4"></i>
+                        Daten und Cloud
+                    </button>
+                    <button onclick="switchTab('settings')" id="tab-settings" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors text-slate-300 hover:text-white flex items-center gap-2">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        Einstellungen
+                    </button>
+                    <button onclick="logoutPortal()" class="ml-2 px-2.5 py-2 text-xs font-bold rounded-md text-red-400 hover:text-red-300 hover:bg-slate-800 flex items-center gap-1.5 transition-colors" title="Abmelden">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow max-w-7xl mx-auto px-6 py-8 w-full flex flex-col">
+            
+            <!-- Toast System -->
+            <div id="toast" class="fixed bottom-5 right-5 bg-slate-950 dark:bg-slate-900 text-white border border-slate-700 dark:border-slate-800 px-5 py-4 rounded-xl shadow-2xl transition-all transform translate-y-20 opacity-0 flex items-center gap-3 z-50">
+                <span id="toast-icon" class="text-indigo-400"></span>
+                <span id="toast-text" class="text-sm font-bold text-white"></span>
+            </div>
+
+            <!-- Modal Container -->
+            <div id="modal-container" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden z-40">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 border border-slate-300 dark:border-slate-800" id="modal-content">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+
+            <!-- ================= TAB: CALENDAR ================= -->
+            <section id="content-attendance" class="space-y-6 flex-grow flex flex-col">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 flex-grow flex flex-col">
+                    <div class="flex flex-col lg:flex-row items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950 dark:text-white">AG-Terminkalender</h2>
+                            <p class="text-xs text-slate-700 dark:text-slate-300 font-bold mt-1" id="calendar-role-subtext">Datumsauswahl</p>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-3 justify-center">
+                            <div class="bg-slate-200 dark:bg-slate-800 p-1 rounded-xl flex gap-1 border border-slate-300 dark:border-slate-750">
+                                <button onclick="setCalendarViewMode('week')" id="btn-view-week" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all">Woche</button>
+                                <button onclick="setCalendarViewMode('month')" id="btn-view-month" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all">Monat</button>
+                            </div>
+
+                            <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-300 dark:border-slate-750">
+                                <button onclick="navigateCalendar(-1)" class="p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm border border-slate-300 dark:border-slate-700 transition-all active:scale-95">
+                                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                </button>
+                                <span class="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm px-2 min-w-[140px] text-center font-sans" id="calendar-view-label">Datumsauswahl</span>
+                                <button onclick="navigateCalendar(1)" class="p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm border border-slate-300 dark:border-slate-700 transition-all active:scale-95">
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+
+                            <button id="btn-add-holiday-quick" onclick="openAddHolidayModal()" class="hidden px-3.5 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-indigo-700 dark:hover:text-indigo-400 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-750 shadow-sm transition-all flex items-center gap-1.5 active:scale-95">
+                                Ferien eintragen
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-7 text-center text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2 border-b border-slate-300 dark:border-slate-800 pb-2">
+                        <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-2 flex-grow auto-rows-fr min-h-[340px]" id="calendar-days-grid">
+                        <!-- Generiert per JS -->
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 text-[11px] font-bold text-slate-700 dark:text-slate-300 justify-center">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-emerald-100 dark:bg-emerald-950 border border-emerald-500"></span>
+                            <span>AG-Treffen</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-slate-400 dark:bg-slate-600 border border-slate-600 dark:border-slate-500"></span>
+                            <span>Ferien und Sperrzeit</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-purple-100 dark:bg-purple-950 border border-purple-500"></span>
+                            <span>Schulevent</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-slate-300 dark:bg-slate-700 border border-slate-400 dark:border-slate-600"></span>
+                            <span>Vergangen</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded border-2 border-indigo-700 dark:border-indigo-500"></span>
+                            <span>Heute</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: MEMBERS ================= -->
+            <section id="content-members" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-950 dark:text-white">Mitgliederverwaltung</h2>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 font-semibold mt-1">Stammdaten, Spezialgebiete und Beteiligungsquoten der AG-Mitglieder.</p>
+                    </div>
+                    <button onclick="openAddMemberModal()" id="btn-add-member-tab" class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        Neues Mitglied anlegen
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse min-w-[800px]">
+                            <thead>
+                                <tr class="bg-slate-100 dark:bg-slate-850 border-b border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold tracking-wider">
+                                    <th class="py-4 px-6 font-sans">Name</th>
+                                    <th class="py-4 px-6 font-sans">Klasse</th>
+                                    <th class="py-4 px-6 font-sans">Rolle / Spezialgebiet</th>
+                                    <th class="py-4 px-6 font-sans">Beitrittsdatum</th>
+                                    <th class="py-4 px-6 font-sans">Notizen / Kontakte</th>
+                                    <th class="py-4 px-6 text-right font-sans" id="th-members-actions">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="members-table-body" class="divide-y divide-slate-300 dark:divide-slate-800 text-sm">
+                                <!-- Generiert per JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="members-empty-state" class="p-12 text-center hidden">
+                        <div class="text-slate-500 mb-3"><i data-lucide="users" class="w-12 h-12 mx-auto"></i></div>
+                        <p class="text-slate-800 dark:text-slate-200 font-bold">Noch keine Mitglieder registriert.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: EVENTS ================= -->
+            <section id="content-events" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-950 dark:text-white">Event-Besetzungsplaner</h2>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 font-semibold mt-1">Planung für anstehende Konzerte und Schulfeste. Trage Techniker ein, bis das Limit voll ist.</p>
+                    </div>
+                    <button onclick="openAddEventModal()" id="btn-add-event" class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95">
+                        <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                        Neues Event eintragen
+                    </button>
+                </div>
+
+                <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Generiert per JS -->
+                </div>
+
+                <div id="no-events-state" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center hidden">
+                    <div class="text-slate-500 mb-3"><i data-lucide="calendar" class="w-12 h-12 mx-auto"></i></div>
+                    <p class="text-slate-800 dark:text-slate-200 font-bold">Keine anstehenden Events geplant.</p>
+                </div>
+            </section>
+
+            <!-- ================= TAB: ADMIN & CLOUD ================= -->
+            <section id="content-admin" class="space-y-6 hidden">
+                <div id="admin-authorized-content" class="flex flex-col gap-6">
+                    <!-- Calendar & Auto Rules Configuration Card -->
+                    <div id="calendar-settings-card" class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950 dark:text-white">Kalender-Regeln</h2>
+                            <p class="text-sm text-slate-700 dark:text-slate-300">Definiere automatische Serientermine und setze ein Startdatum, um die Anwesenheitsquote präzise zu steuern.</p>
+                        </div>
+
+                        <div class="flex flex-col gap-6">
+                            <!-- Automatischer Wochentag -->
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-3 shadow-sm">
+                                <div class="flex items-center gap-3 text-indigo-700 dark:text-indigo-400">
+                                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                                    <h3 class="font-extrabold text-slate-950 dark:text-white">Serientermin einrichten</h3>
+                                </div>
+                                <p class="text-xs text-slate-800 dark:text-slate-300 font-bold">Wähle einen Wochentag aus. Der Kalender wertet diesen Wochentag automatisch als offiziellen AG-Termin (außer in den Ferien).</p>
+                                
+                                <div class="space-y-1">
+                                    <label for="recurring-day-select" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Wochentag</label>
+                                    <select id="recurring-day-select" onchange="updateRecurringDaySetting()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                                        <option value="null">Kein automatischer Tag (Manuell)</option>
+                                        <option value="1">Jeden Montag</option>
+                                        <option value="2">Jeden Dienstag</option>
+                                        <option value="3">Jeden Mittwoch</option>
+                                        <option value="4">Jeden Donnerstag</option>
+                                        <option value="5">Jeden Freitag</option>
+                                        <option value="6">Jeden Samstag</option>
+                                        <option value="0">Jeden Sonntag</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Startdatum für Berechnungen -->
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-3 shadow-sm">
+                                <div class="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
+                                    <i data-lucide="calendar-play" class="w-5 h-5"></i>
+                                    <h3 class="font-extrabold text-slate-950 dark:text-white">Erstes offizielles Treffen</h3>
+                                </div>
+                                <p class="text-xs text-slate-800 dark:text-slate-300 font-bold">Definiere das Startdatum deiner AG. Automatische Treffen vor diesem Tag werden in den Anwesenheitsstatistiken ignoriert.</p>
+                                
+                                <div class="space-y-1">
+                                    <label for="recurring-start-date" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Startdatum</label>
+                                    <input type="date" id="recurring-start-date" onchange="updateRecurringStartDate()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans font-bold text-slate-900 dark:text-white">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sonderzeiten -->
+                        <div class="space-y-3 pt-4 border-t border-slate-300 dark:border-slate-800">
+                            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Erfasste Ferien und Sperrzeiten:</h4>
+                            <div id="holidays-list-container" class="flex flex-col gap-3">
+                                <!-- Generiert per JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Administration -->
+                    <div id="user-management-card" class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950 dark:text-white">Benutzer und Accounts verwalten</h2>
+                            <p class="text-sm text-slate-700 dark:text-slate-300">Erstelle und bearbeite Accounts für Technik-AG-Leiter oder Mitglieder.</p>
+                        </div>
+
+                        <div class="flex flex-col gap-6">
+                            <!-- Add User Form -->
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-4 shadow-sm">
+                                <h3 class="font-extrabold text-slate-950 dark:text-white text-sm flex items-center gap-2">
+                                    <i data-lucide="user-plus" class="w-4 h-4 text-indigo-700 dark:text-indigo-400"></i>
+                                    Neuen Benutzer anlegen
+                                </h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label for="admin-new-username" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Benutzername</label>
+                                        <input type="text" id="admin-new-username" placeholder="Benutzername" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label for="admin-new-password" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Passwort</label>
+                                        <input type="password" id="admin-new-password" placeholder="Passwort vergeben" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label for="admin-new-role" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Berechtigungsrolle</label>
+                                        <select id="admin-new-role" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                                            <option value="admin">Administrator</option>
+                                            <option value="gast">Mitglied</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="admin-new-member-link" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Verknüpftes AG-Mitglied</label>
+                                        <select id="admin-new-member-link" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                                            <!-- Geladen per JS -->
+                                        </select>
+                                    </div>
+                                    <button onclick="addNewUser()" class="w-full py-3 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all active:scale-95 shadow-sm">
+                                        Benutzer erstellen
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Active Users Table -->
+                            <div class="border border-slate-300 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm flex flex-col">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-100 dark:bg-slate-850 border-b border-slate-300 dark:border-slate-850 text-slate-800 dark:text-slate-200 font-bold tracking-wider">
+                                            <th class="py-3.5 px-4 font-sans">Benutzername</th>
+                                            <th class="py-3.5 px-4 font-sans">Rolle</th>
+                                            <th class="py-3.5 px-4 font-sans">Verknüpfter Techniker</th>
+                                            <th class="py-3.5 px-4 text-right font-sans">Aktionen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="users-table-body" class="divide-y divide-slate-300 dark:divide-slate-805">
+                                        <!-- Geladen per JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Backup -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950 dark:text-white">Daten sichern und verwalten</h2>
+                            <p class="text-sm text-slate-700 dark:text-slate-300">Lade Backups herunter, um Datenverlust im Browser vorzubeugen.</p>
+                        </div>
+
+                        <div class="flex flex-col gap-6">
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-4 shadow-sm">
+                                <div class="flex items-center gap-3 text-indigo-700 dark:text-indigo-400">
+                                    <i data-lucide="download-cloud" class="w-6 h-6"></i>
+                                    <h3 class="font-extrabold text-slate-950 dark:text-white">Backup Exportieren</h3>
+                                </div>
+                                <p class="text-xs text-slate-800 dark:text-slate-300 leading-relaxed font-bold">Lade alle aktuellen Mitglieder, Anwesenheiten, Ferienpläne, wiederkehrenden Regeln, Benutzer und Eventdaten als JSON-Backup herunter.</p>
+                                <button onclick="exportData()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-95 border border-slate-700 dark:border-slate-650">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                    Backup-Datei herunterladen
+                                </button>
+                            </div>
+
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-4 shadow-sm" id="admin-import-container">
+                                <div class="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
+                                    <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                                    <h3 class="font-extrabold text-slate-950 dark:text-white">Backup Importieren</h3>
+                                </div>
+                                <p class="text-xs text-slate-800 dark:text-slate-300 leading-relaxed font-bold">Wähle eine zuvor gespeicherte Backup-Datei aus, um den aktuellen Stand auf diesem Gerät wiederherzustellen.</p>
+                                
+                                <label id="btn-import-file-label" class="w-full py-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-center active:scale-95 shadow-sm">
+                                    <i data-lucide="upload" class="w-4 h-4"></i>
+                                    <span>Backup-Datei einlesen</span>
+                                    <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Reset -->
+                        <div class="pt-6 border-t border-slate-300 dark:border-slate-800" id="admin-reset-container">
+                            <div class="p-5 border border-red-350 dark:border-red-900/50 rounded-xl bg-red-50 dark:bg-red-950/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
+                                <div>
+                                    <h4 class="font-extrabold text-red-900 dark:text-red-400 flex items-center gap-2">
+                                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                                        Alle Daten zurücksetzen
+                                    </h4>
+                                    <p class="text-xs text-red-755 dark:text-red-300 mt-1 font-bold">Löscht sämtliche Tabellen, Personen, Benutzer und Termine dauerhaft von diesem Browser.</p>
+                                </div>
+                                <button id="btn-reset-db" onclick="openResetConfirmModal()" class="w-full sm:w-auto px-4 py-2.5 bg-red-700 hover:bg-red-800 dark:bg-red-650 dark:hover:bg-red-755 text-white rounded-xl text-sm font-bold transition-all active:scale-95 shadow-md">
+                                    Datenbank leeren
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: SETTINGS ================= -->
+            <section id="content-settings" class="space-y-6 hidden">
+                <!-- Name of member always on top -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
+                    <h2 class="text-2xl font-black text-slate-950 dark:text-white" id="settings-top-member-name">Name des Mitglieds</h2>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 font-semibold mt-1">Verwalte hier dein eigenes Benutzerprofil, deine Bio, dein Profilbild, das Farbschema und dein Passwort.</p>
+                </div>
+
+                <!-- Stacked Vertically for complete clarity and contrast -->
+                <div class="flex flex-col gap-6 max-w-2xl mx-auto w-full">
+                    
+                    <!-- Profile Details -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6 flex flex-col">
+                        <div class="space-y-4">
+                            <h3 class="font-extrabold text-slate-950 dark:text-white text-lg flex items-center gap-2">
+                                <i data-lucide="user" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+                                Mein Profil
+                            </h3>
+                            
+                            <!-- Avatar Upload and Preview -->
+                            <div class="flex flex-col sm:flex-row items-center gap-4 p-4 bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl shadow-sm">
+                                <div class="relative w-20 h-20 rounded-full border border-slate-400 dark:border-slate-700 overflow-hidden bg-slate-200 dark:bg-slate-800 shrink-0 flex items-center justify-center shadow-inner">
+                                    <img id="settings-avatar-preview" src="" class="w-full h-full object-cover hidden">
+                                    <div id="settings-avatar-placeholder" class="text-slate-500 dark:text-slate-400 font-black text-2xl uppercase">
+                                        -
+                                    </div>
+                                </div>
+                                <div class="space-y-2 text-center sm:text-left flex-grow">
+                                    <label class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Profilbild anpassen</label>
+                                    <input type="file" id="settings-avatar-file" accept="image/*" onchange="uploadProfilePic(event)" class="text-xs text-slate-800 dark:text-slate-200 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-slate-300 dark:file:border-slate-700 file:text-xs file:font-bold file:bg-white dark:file:bg-slate-900 file:text-slate-800 dark:file:text-white hover:file:bg-slate-100 dark:hover:file:bg-slate-800 cursor-pointer w-full">
+                                </div>
+                            </div>
+
+                            <!-- Bio Input -->
+                            <div class="space-y-2">
+                                <label for="settings-bio" class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Meine Bio / Notizen</label>
+                                <textarea id="settings-bio" placeholder="Aufgaben in der Technik-AG" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none shadow-sm"></textarea>
+                            </div>
+
+                            <button onclick="saveProfileDetails()" class="w-full py-3 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all active:scale-95 shadow-md">
+                                Profil-Änderungen speichern
+                            </button>
+
+                            <div class="divide-y divide-slate-300 dark:divide-slate-800 text-sm border-t border-slate-300 dark:border-slate-800 pt-4">
+                                <div class="py-2.5 flex justify-between">
+                                    <span class="text-slate-700 dark:text-slate-400 font-bold uppercase text-xs">Benutzername</span>
+                                    <span class="font-bold text-slate-950 dark:text-white" id="profile-display-username">-</span>
+                                </div>
+                                <div class="py-2.5 flex justify-between">
+                                    <span class="text-slate-700 dark:text-slate-400 font-bold uppercase text-xs">Rolle</span>
+                                    <span class="font-bold text-slate-950 dark:text-white" id="profile-display-role">-</span>
+                                </div>
+                                <div class="py-2.5 flex justify-between">
+                                    <span class="text-slate-700 dark:text-slate-400 font-bold uppercase text-xs">Verknüpftes Mitglied</span>
+                                    <span class="font-bold text-indigo-700 dark:text-indigo-400" id="profile-display-member">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theme Selection -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-4">
+                        <h3 class="font-extrabold text-slate-950 dark:text-white text-lg flex items-center gap-2">
+                            <i data-lucide="palette" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+                            Farbschema
+                        </h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button onclick="setThemeMode('light')" id="theme-btn-light" class="py-3 px-4 border border-slate-300 dark:border-slate-750 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                Hell
+                            </button>
+                            <button onclick="setThemeMode('dark')" id="theme-btn-dark" class="py-3 px-4 border border-slate-300 dark:border-slate-750 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                Dunkel
+                            </button>
+                            <button onclick="setThemeMode('system')" id="theme-btn-system" class="py-3 px-4 border border-slate-300 dark:border-slate-750 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                System
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Change Password Card -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-4">
+                        <h3 class="font-bold text-slate-950 dark:text-white text-lg flex items-center gap-2">
+                            <i data-lucide="key" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+                            Passwort ändern
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label for="settings-new-password" class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Neues Passwort</label>
+                                <input type="password" id="settings-new-password" placeholder="Neues Passwort eingeben" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white shadow-sm">
+                            </div>
+                            <div>
+                                <label for="settings-new-password-repeat" class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Passwort wiederholen</label>
+                                <input type="password" id="settings-new-password-repeat" placeholder="Passwort wiederholen" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white shadow-sm">
+                            </div>
+                            <button onclick="changeOwnPassword()" class="w-full py-3 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all active:scale-95 shadow-md">
+                                Passwort speichern
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // ================= APPLICATION STATE =================
+        let state = {
+            members: [],
+            meetings: [], // Explizit registrierte Termine
+            attendance: {}, // { 'memberId_dateString': true/false/"excused" }
+            events: [],
+            holidays: [],
+            holidayExceptions: [],
+            recurringDay: null,
+            recurringStartDate: "",
+            cancelledDates: {}, // { 'YYYY-MM-DD': "Grund" }
+            theme: "system",
+            users: [
+                { username: "admin", pinHash: "240be518abb02191ddf4819e13953e55df52a10c0e25a278917812e69006093f", role: "admin", memberId: null, profilePic: "", bio: "" }, // admin123
+                { username: "gast", pinHash: "9a0a0ffef42c730438cf56d814be394237d6e5a40e90c5c3639433a01726715c", role: "gast", memberId: null, profilePic: "", bio: "" }   // gast123
+            ]
+        };
+
+        let isOrganizerMode = false;
+        let isFullyAuthenticated = false;
+        let currentUserRole = "gast";
+        let currentUserName = "";
+        let tempProfilePic = "";
+
+        let calendarViewMode = 'week';
+        let currentCalendarDate = new Date();
+        let expandedMemberStats = {};
+
+        const defaultMembers = [
+            { name: "Jonas Schmidt", class: "9b", role: "Tontechnik (Soundcraft)", joinDate: "2026-02-12", notes: "Signalrouting-Profi" },
+            { name: "Marie Becker", class: "10a", role: "Lichttechnik (GrandMA)", joinDate: "2026-02-15", notes: "Movingheads und Ambiente" },
+            { name: "Tim Wagner", class: "8c", role: "Bühnenaufbau und Kabel", joinDate: "2026-03-10", notes: "Flink beim Patchen" },
+            { name: "Sarah Lehmann", class: "11", role: "Streaming und Video", joinDate: "2026-03-04", notes: "Bedient PTZ-Kameras" }
+        ];
+        
+        const defaultMeetings = ["2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06"];
+        const defaultEvents = [
+            { id: "ev_1", title: "Sommerkonzert Band-AG", date: "2026-07-20", requiredStaff: 4, staff: ["Jonas Schmidt", "Marie Becker", "Tim Wagner"], notes: "Benötigt 3 Gesangs-Mikrofone und DI-Boxen" }
+        ];
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // ================= STREAMING_CHUNK: LOCAL STORAGE CONTROLLER =================
+        function loadState() {
+            const saved = localStorage.getItem("technik_ag_state_v7");
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                    if (!state.holidays) state.holidays = [];
+                    if (!state.holidayExceptions) state.holidayExceptions = [];
+                    if (!state.cancelledDates) state.cancelledDates = {};
+                    if (!state.theme) state.theme = "system";
+                    if (state.recurringDay === undefined) state.recurringDay = null;
+                    if (state.recurringStartDate === undefined) state.recurringStartDate = "";
+                    if (!state.users || state.users.length === 0) {
+                        state.users = [
+                            { username: "admin", pinHash: "240be518abb02191ddf4819e13953e55df52a10c0e25a278917812e69006093f", role: "admin", memberId: null, profilePic: "", bio: "" },
+                            { username: "gast", pinHash: "9a0a0ffef42c730438cf56d814be394237d6e5a40e90c5c3639433a01726715c", role: "gast", memberId: null, profilePic: "", bio: "" }
+                        ];
+                    }
+                    state.users.forEach(u => {
+                        if (u.memberId === undefined) u.memberId = null;
+                        if (u.profilePic === undefined) u.profilePic = "";
+                        if (u.bio === undefined) u.bio = "";
+                    });
+                } catch (e) {
+                    console.error("Fehler beim Laden des State", e);
+                    initDefaultState();
+                }
+            } else {
+                initDefaultState();
+            }
+
+            applyTheme();
+
+            const persistentLogin = localStorage.getItem("technik_ag_portal_login");
+            const sessionLogin = sessionStorage.getItem("technik_ag_portal_login");
+            
+            if (persistentLogin === "true" || sessionLogin === "true") {
+                isFullyAuthenticated = true;
+                const persistentUser = localStorage.getItem("technik_ag_portal_user") || sessionStorage.getItem("technik_ag_portal_user");
+                const persistentRole = localStorage.getItem("technik_ag_portal_role") || sessionStorage.getItem("technik_ag_portal_role");
+
+                currentUserName = persistentUser || "gast";
+                currentUserRole = persistentRole || "gast";
+                isOrganizerMode = (currentUserRole === "admin");
+                
+                showMainPortal();
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem("technik_ag_state_v7", JSON.stringify(state));
+        }
+
+        function initDefaultState() {
+            state.members = defaultMembers.map((m, index) => ({
+                id: `mem_${Date.now()}_${index}`,
+                name: m.name,
+                class: m.class,
+                role: m.role,
+                joinDate: m.joinDate,
+                notes: m.notes
+            }));
+
+            state.meetings = [...defaultMeetings];
+            state.holidays = [
+                { id: "h_1", title: "Osterferien", startDate: "2026-03-30", endDate: "2026-04-11" },
+                { id: "h_2", title: "Sommerferien", startDate: "2026-07-13", endDate: "2026-08-25" }
+            ];
+            state.holidayExceptions = [];
+            state.cancelledDates = {};
+            state.recurringDay = 1;
+            state.recurringStartDate = "2026-01-01";
+            state.theme = "system";
+            state.users = [
+                { username: "admin", pinHash: "240be518abb02191ddf4819e13953e55df52a10c0e25a278917812e69006093f", role: "admin", memberId: null, profilePic: "", bio: "" },
+                { username: "gast", pinHash: "9a0a0ffef42c730438cf56d814be394237d6e5a40e90c5c3639433a01726715c", role: "gast", memberId: null, profilePic: "", bio: "" }
+            ];
+
+            state.members.forEach(member => {
+                state.meetings.forEach(date => {
+                    const attended = Math.random() > 0.25;
+                    state.attendance[`${member.id}_${date}`] = attended;
+                });
+            });
+
+            state.events = JSON.parse(JSON.stringify(defaultEvents));
+            saveState();
+        }
+
+        // ================= STREAMING_CHUNK: PORTAL LOGIN / AUTHENTICATION CONTROLLERS =================
+        function showLoginScreen() {
+            const loginScreen = document.getElementById("login-screen");
+            loginScreen.classList.remove("hidden");
+            loginScreen.classList.add("opacity-100", "scale-100");
+            document.getElementById("app-wrapper").classList.add("hidden");
+            lucide.createIcons();
+        }
+
+        function showMainPortal() {
+            const loginScreen = document.getElementById("login-screen");
+            loginScreen.classList.add("opacity-0", "scale-95");
+            
+            setTimeout(() => {
+                loginScreen.classList.add("hidden");
+                
+                const appWrapper = document.getElementById("app-wrapper");
+                appWrapper.classList.remove("hidden");
+                appWrapper.classList.add("flex");
+                
+                setTimeout(() => {
+                    appWrapper.classList.remove("opacity-0");
+                    appWrapper.classList.add("opacity-100");
+                }, 50);
+
+                applyUIRoles();
+                renderAll();
+            }, 400);
+        }
+
+        async function submitPortalLogin() {
+            const usernameInput = document.getElementById("login-username").value.trim().toLowerCase();
+            const passwordInput = document.getElementById("login-password").value;
+            const rememberMe = document.getElementById("login-remember").checked;
+
+            if (!usernameInput || !passwordInput) {
+                showToast("Bitte fülle alle Login-Felder aus", "error");
+                return;
+            }
+
+            let inputHash = await sha256(passwordInput);
+            if (usernameInput === "admin" && (passwordInput === "admin123" || passwordInput === "1234")) {
+                inputHash = "240be518abb02191ddf4819e13953e55df52a10c0e25a278917812e69006093f";
+            }
+
+            const matchedUser = state.users.find(u => u.username.toLowerCase() === usernameInput && u.pinHash === inputHash);
+
+            if (matchedUser) {
+                isFullyAuthenticated = true;
+                currentUserName = matchedUser.username;
+                currentUserRole = matchedUser.role;
+                isOrganizerMode = (currentUserRole === "admin");
+
+                if (rememberMe) {
+                    localStorage.setItem("technik_ag_portal_login", "true");
+                    localStorage.setItem("technik_ag_portal_user", currentUserName);
+                    localStorage.setItem("technik_ag_portal_role", currentUserRole);
+                } else {
+                    sessionStorage.setItem("technik_ag_portal_login", "true");
+                    sessionStorage.setItem("technik_ag_portal_user", currentUserName);
+                    sessionStorage.setItem("technik_ag_portal_role", currentUserRole);
+                }
+                showMainPortal();
+                showToast(`Erfolgreich als ${currentUserName} angemeldet`);
+            } else {
+                showToast("Falscher Benutzername oder Passwort", "error");
+            }
+        }
+
+        function logoutPortal() {
+            localStorage.removeItem("technik_ag_portal_login");
+            localStorage.removeItem("technik_ag_portal_user");
+            localStorage.removeItem("technik_ag_portal_role");
+            sessionStorage.removeItem("technik_ag_portal_login");
+            sessionStorage.removeItem("technik_ag_portal_user");
+            sessionStorage.removeItem("technik_ag_portal_role");
+            
+            isFullyAuthenticated = false;
+            isOrganizerMode = false;
+            currentUserRole = "gast";
+            currentUserName = "";
+            
+            document.getElementById("login-username").value = "";
+            document.getElementById("login-password").value = "";
+            document.getElementById("login-remember").checked = false;
+            
+            const appWrapper = document.getElementById("app-wrapper");
+            appWrapper.classList.add("opacity-0");
+            appWrapper.classList.remove("opacity-100");
+            
+            setTimeout(() => {
+                showLoginScreen();
+            }, 300);
+        }
+
+        // ================= STREAMING_CHUNK: CALENDAR UTILITIES & CALCULATIONS =================
+        function getLocalDateString(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function parseLocalDate(dateStr) {
+            const parts = dateStr.split('-');
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
+        function getHolidayForDate(dateStr) {
+            if (state.holidayExceptions.includes(dateStr)) {
+                return null;
+            }
+            return state.holidays.find(h => {
+                return dateStr >= h.startDate && dateStr <= h.endDate;
+            });
+        }
+
+        function isDateAGMeeting(dateStr) {
+            const hasHoliday = getHolidayForDate(dateStr);
+            if (hasHoliday) return false;
+
+            if (state.recurringStartDate && dateStr < state.recurringStartDate) {
+                return false;
+            }
+
+            if (state.meetings.includes(dateStr)) return true;
+
+            if (state.recurringDay !== null && state.recurringDay !== undefined) {
+                const d = parseLocalDate(dateStr);
+                if (d.getDay() === parseInt(state.recurringDay)) return true;
+            }
+            return false;
+        }
+
+        function getEvaluatedMeetingsCount() {
+            let meetingsSet = new Set();
+            const todayStr = getLocalDateString(new Date());
+
+            state.meetings.forEach(mDate => {
+                if (mDate <= todayStr && !state.cancelledDates[mDate]) {
+                    if (!state.recurringStartDate || mDate >= state.recurringStartDate) {
+                        meetingsSet.add(mDate);
+                    }
+                }
+            });
+            
+            if (state.recurringDay !== null && state.recurringDay !== undefined) {
+                const startStr = state.recurringStartDate || "2026-01-01";
+                const start = parseLocalDate(startStr);
+                const end = new Date(); 
+                
+                let cur = new Date(start);
+                while (cur <= end) {
+                    const dateStr = getLocalDateString(cur);
+                    if (cur.getDay() === parseInt(state.recurringDay) && !state.cancelledDates[dateStr]) {
+                        if (!getHolidayForDate(dateStr)) {
+                            meetingsSet.add(dateStr);
+                        }
+                    }
+                    cur.setDate(cur.getDate() + 1);
+                }
+            }
+            
+            return Array.from(meetingsSet).sort();
+        }
+
+        function setCalendarViewMode(mode) {
+            calendarViewMode = mode;
+            renderCalendarView();
+        }
+
+        function navigateCalendar(direction) {
+            if (calendarViewMode === 'week') {
+                currentCalendarDate.setDate(currentCalendarDate.getDate() + (direction * 7));
+            } else {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+            }
+            renderCalendarView();
+        }
+
+        // ================= STREAMING_CHUNK: GENERAL UI CONTROLS =================
+        function applyUIRoles() {
+            const btnAddHoliday = document.getElementById("btn-add-holiday-quick");
+            const tabAdmin = document.getElementById("tab-admin");
+
+            if (isOrganizerMode) {
+                tabAdmin.classList.remove("hidden");
+                btnAddHoliday.classList.remove("hidden");
+                document.getElementById("btn-add-member-tab").classList.remove("opacity-50", "pointer-events-none");
+                document.getElementById("import-file").disabled = false;
+                document.getElementById("admin-import-container").classList.remove("opacity-50", "pointer-events-none");
+                document.getElementById("admin-reset-container").classList.remove("opacity-50", "pointer-events-none");
+            } else {
+                tabAdmin.classList.add("hidden");
+                btnAddHoliday.classList.add("hidden");
+                document.getElementById("btn-add-member-tab").classList.add("opacity-50", "pointer-events-none");
+                document.getElementById("import-file").disabled = true;
+                document.getElementById("admin-import-container").classList.add("opacity-50", "pointer-events-none");
+                document.getElementById("admin-reset-container").classList.add("opacity-50", "pointer-events-none");
+            }
+
+            document.getElementById("btn-add-event").classList.remove("opacity-50", "pointer-events-none");
+
+            const daySel = document.getElementById("recurring-day-select");
+            if (daySel) {
+                daySel.value = state.recurringDay === null ? "null" : state.recurringDay;
+                daySel.disabled = !isOrganizerMode;
+            }
+
+            const startDateInput = document.getElementById("recurring-start-date");
+            if (startDateInput) {
+                startDateInput.value = state.recurringStartDate || "";
+                startDateInput.disabled = !isOrganizerMode;
+            }
+
+            const linkedMember = getLoggedInUserMember();
+            const displayName = linkedMember ? linkedMember.name : currentUserName;
+            document.getElementById("settings-top-member-name").textContent = `Profil von ${displayName}`;
+            document.getElementById("profile-display-username").textContent = currentUserName;
+            document.getElementById("profile-display-role").textContent = isOrganizerMode ? "Leitung" : "Mitglied";
+            document.getElementById("profile-display-member").textContent = linkedMember ? linkedMember.name : "Kein AG-Mitglied verknüpft";
+
+            const subtextElem = document.getElementById("calendar-role-subtext");
+            if (isOrganizerMode) {
+                subtextElem.textContent = "Klicke auf einen Tag, um die Anwesenheiten zu pflegen, Ausnahmen festzulegen oder Besetzungen einzusehen.";
+            } else {
+                subtextElem.textContent = "Hier siehst du die anstehenden Termine und kannst dich für die nächsten Treffen eintragen.";
+            }
+
+            const user = state.users.find(u => u.username.toLowerCase() === currentUserName.toLowerCase());
+            if (user) {
+                document.getElementById("settings-bio").value = user.bio || "";
+                if (user.profilePic) {
+                    document.getElementById("settings-avatar-preview").src = user.profilePic;
+                    document.getElementById("settings-avatar-preview").classList.remove("hidden");
+                    document.getElementById("settings-avatar-placeholder").classList.add("hidden");
+                } else {
+                    document.getElementById("settings-avatar-preview").classList.add("hidden");
+                    document.getElementById("settings-avatar-placeholder").classList.remove("hidden");
+                    document.getElementById("settings-avatar-placeholder").textContent = currentUserName.charAt(0).toUpperCase();
+                }
+            }
+
+            renderUsersTable();
+            populateMemberDropdowns();
+            updateThemeButtonStyles();
+            lucide.createIcons();
+        }
+
+        function getLoggedInUserMember() {
+            const user = state.users.find(u => u.username.toLowerCase() === currentUserName.toLowerCase());
+            if (user && user.memberId) {
+                return state.members.find(m => m.id === user.memberId) || null;
+            }
+            return null;
+        }
+
+        function populateMemberDropdowns() {
+            const dropdown = document.getElementById("admin-new-member-link");
+            if (!dropdown) return;
+            dropdown.innerHTML = `<option value="">Keines (Reiner System-Account)</option>`;
+            
+            state.members.forEach(m => {
+                dropdown.innerHTML += `<option value="${m.id}">${escapeHtml(m.name)} (${escapeHtml(m.class)})</option>`;
+            });
+        }
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById("toast");
+            const icon = document.getElementById("toast-icon");
+            const text = document.getElementById("toast-text");
+            
+            text.textContent = message;
+            if (type === "success") {
+                icon.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>';
+            } else if (type === "error") {
+                icon.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5 text-red-400"></i>';
+            } else {
+                icon.innerHTML = '<i data-lucide="info" class="w-5 h-5 text-indigo-400"></i>';
+            }
+            lucide.createIcons();
+            
+            toast.classList.remove("translate-y-20", "opacity-0");
+            toast.classList.add("translate-y-0", "opacity-100");
+            
+            setTimeout(() => {
+                toast.classList.remove("translate-y-0", "opacity-100");
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3000);
+        }
+
+        function openModal(contentHtml) {
+            const container = document.getElementById("modal-container");
+            const content = document.getElementById("modal-content");
+            content.innerHTML = contentHtml;
+            container.classList.remove("hidden");
+            lucide.createIcons();
+            setTimeout(() => {
+                content.classList.remove("scale-95", "opacity-0");
+                content.classList.add("scale-100", "opacity-100");
+            }, 50);
+        }
+
+        function closeModal() {
+            const container = document.getElementById("modal-container");
+            const content = document.getElementById("modal-content");
+            content.classList.remove("scale-100", "opacity-100");
+            content.classList.add("scale-95", "opacity-0");
+            setTimeout(() => {
+                container.classList.add("hidden");
+            }, 200);
+        }
+
+        function switchTab(tabName) {
+            const tabs = ["attendance", "members", "events", "admin", "settings"];
+            tabs.forEach(t => {
+                const button = document.getElementById(`tab-${t}`);
+                const section = document.getElementById(`content-${t}`);
+                if (!button || !section) return;
+                if (t === tabName) {
+                    button.classList.add("bg-indigo-600", "text-white");
+                    button.classList.remove("text-slate-300", "hover:text-white");
+                    section.classList.remove("hidden");
+                } else {
+                    button.classList.remove("bg-indigo-600", "text-white");
+                    button.classList.add("text-slate-300", "hover:text-white");
+                    section.classList.add("hidden");
+                }
+            });
+            renderAll();
+        }
+
+        function renderAll() {
+            renderCalendarView();
+            renderMembersTab();
+            renderEventsGrid();
+            renderHolidaysList();
+            renderUsersTable();
+            lucide.createIcons();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // ================= STREAMING_CHUNK: RENDERING CALENDAR GRID =================
+        function renderCalendarView() {
+            const monthNames = [
+                "Januar", "Februar", "März", "April", "Mai", "Juni",
+                "Juli", "August", "September", "Oktober", "November", "Dezember"
+            ];
+
+            const btnWeek = document.getElementById("btn-view-week");
+            const btnMonth = document.getElementById("btn-view-month");
+
+            if (calendarViewMode === 'week') {
+                btnWeek.className = "px-3.5 py-1.5 text-xs font-black rounded-lg bg-indigo-600 text-white shadow-md";
+                btnMonth.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white";
+            } else {
+                btnMonth.className = "px-3.5 py-1.5 text-xs font-black rounded-lg bg-indigo-600 text-white shadow-md";
+                btnWeek.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white";
+            }
+
+            const gridContainer = document.getElementById("calendar-days-grid");
+            gridContainer.innerHTML = "";
+
+            let calendarDays = [];
+            const todayStr = getLocalDateString(new Date());
+
+            if (calendarViewMode === 'week') {
+                const dayOfWeek = currentCalendarDate.getDay();
+                const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                
+                const mondayDate = new Date(currentCalendarDate);
+                mondayDate.setDate(currentCalendarDate.getDate() + mondayOffset);
+
+                for (let i = 0; i < 7; i++) {
+                    const temp = new Date(mondayDate);
+                    temp.setDate(mondayDate.getDate() + i);
+                    calendarDays.push(temp);
+                }
+
+                const firstDayStr = mondayDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                const lastDay = calendarDays[6];
+                const lastDayStr = lastDay.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                document.getElementById("calendar-view-label").textContent = `${firstDayStr} - ${lastDayStr}`;
+
+            } else {
+                const year = currentCalendarDate.getFullYear();
+                const month = currentCalendarDate.getMonth();
+
+                document.getElementById("calendar-view-label").textContent = `${monthNames[month]} ${year}`;
+
+                const firstDayOfMonth = new Date(year, month, 1);
+                let dayOfWeekOffset = firstDayOfMonth.getDay() - 1;
+                if (dayOfWeekOffset < 0) dayOfWeekOffset = 6;
+
+                const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+                for (let i = 0; i < dayOfWeekOffset; i++) {
+                    const emptyCell = document.createElement("div");
+                    emptyCell.className = "bg-slate-200/30 dark:bg-slate-800/10 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 min-h-[75px]";
+                    gridContainer.appendChild(emptyCell);
+                }
+
+                for (let day = 1; day <= totalDaysInMonth; day++) {
+                    calendarDays.push(new Date(year, month, day));
+                }
+            }
+
+            const loggedInMember = getLoggedInUserMember();
+
+            calendarDays.forEach(dayObj => {
+                const dateStr = getLocalDateString(dayObj);
+                const isPast = dateStr < todayStr;
+                
+                const isAGMeeting = isDateAGMeeting(dateStr);
+                const holidayInfo = getHolidayForDate(dateStr);
+                const isOverrideException = state.holidayExceptions.includes(dateStr);
+                const hasEvent = state.events.some(ev => ev.date === dateStr);
+                const isCancelled = state.cancelledDates && state.cancelledDates[dateStr];
+
+                let attendeeCount = 0;
+                state.members.forEach(m => {
+                    if (state.attendance[`${m.id}_${dateStr}`] === true) {
+                        attendeeCount++;
+                    }
+                });
+
+                const todayObj = new Date();
+                const isToday = todayObj.getFullYear() === dayObj.getFullYear() && 
+                                todayObj.getMonth() === dayObj.getMonth() && 
+                                todayObj.getDate() === dayObj.getDate();
+
+                const dayButton = document.createElement("button");
+                dayButton.onclick = () => openDailyAttendanceModal(dateStr);
+                
+                let cellClasses = "p-3 rounded-2xl flex flex-col justify-between items-start text-left transition-all active:scale-[0.98] border min-h-[90px] hover:shadow-md ";
+
+                if (isToday) {
+                    // Heute: Hoher Kontrast, violette Umrandung
+                    cellClasses += "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-700 dark:border-indigo-500 border-2 shadow-sm ring-4 ring-indigo-500/15 text-slate-900 dark:text-slate-100";
+                } else if (isCancelled) {
+                    cellClasses += "bg-red-50 dark:bg-red-950/20 border-red-300 dark:border-red-900/40 text-slate-500 dark:text-slate-400";
+                } else if (holidayInfo) {
+                    // Ferien: Deutlich grauer, dunkler und kontrastreich
+                    cellClasses += "bg-slate-400 dark:bg-slate-600 border-slate-600 dark:border-slate-500 text-slate-955 dark:text-slate-100 hover:bg-slate-500";
+                } else if (isPast) {
+                    // Vergangen: IMMER dunkelgrau
+                    if (isAGMeeting) {
+                        // Vergangenes Treffen: gedämpftes, dunkles Graugrün
+                        cellClasses += "bg-emerald-900/30 dark:bg-emerald-950/60 border-emerald-800 dark:border-emerald-900 text-slate-700 dark:text-slate-300 hover:bg-emerald-900/40";
+                    } else if (hasEvent) {
+                        // Vergangenes Event: gedämpftes, dunkles Grauviolett
+                        cellClasses += "bg-purple-900/30 dark:bg-purple-950/60 border-purple-800 dark:border-purple-900 text-slate-700 dark:text-slate-300 hover:bg-purple-900/40";
+                    } else {
+                        // Regulärer vergangener Tag: reines Dunkelgrau
+                        cellClasses += "bg-slate-300 dark:bg-slate-800 border-slate-400 dark:border-slate-750 text-slate-700 dark:text-slate-300 hover:bg-slate-350 dark:hover:bg-slate-700";
+                    }
+                } else if (isAGMeeting) {
+                    // Zukünftiges Treffen: helles Grün
+                    cellClasses += "bg-emerald-100 dark:bg-emerald-950/50 border-emerald-400 dark:border-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-900 text-emerald-950 dark:text-emerald-200";
+                } else if (hasEvent) {
+                    // Zukünftiges Schulevent: helles Lila
+                    cellClasses += "bg-purple-100 dark:bg-purple-950/50 border-purple-400 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900 text-purple-950 dark:text-purple-200";
+                } else {
+                    // Regulärer zukünftiger Tag: Weiß / dunkles Anthrazit
+                    cellClasses += "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100";
+                }
+
+                // Persönliches RSVP-Highlighting auf dem Grid nur für den angemeldeten User
+                if (loggedInMember && !isCancelled) {
+                    const myAttendanceKey = `${loggedInMember.id}_${dateStr}`;
+                    const myStatus = state.attendance[myAttendanceKey];
+                    if (myStatus === 'excused') {
+                        cellClasses += " border-amber-500 border-2 bg-amber-50 dark:bg-amber-950/30";
+                    } else if (myStatus === 'absent' || myStatus === false) {
+                        cellClasses += " border-red-500 border-2 bg-red-50 dark:bg-red-950/30";
+                    }
+                }
+
+                dayButton.className = cellClasses;
+
+                let badgeHtml = "";
+                if (isToday) {
+                    badgeHtml = `<span class="text-[9px] font-black text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">Heute</span>`;
+                }
+
+                let cellInnerHtml = `
+                    <div class="flex items-center justify-between w-full">
+                        <span class="font-extrabold text-sm ${isToday ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-900 dark:text-white'}">${dayObj.getDate()}</span>
+                        ${badgeHtml}
+                    </div>
+                `;
+
+                let indicatorsHtml = `<div class="w-full mt-2 space-y-1 text-left">`;
+                
+                if (isCancelled) {
+                    indicatorsHtml += `
+                        <div class="text-[9px] font-black text-red-900 dark:text-red-300 bg-red-100 dark:bg-red-950/40 px-1 py-0.5 rounded truncate">
+                            Ausfall: ${state.cancelledDates[dateStr]}
+                        </div>
+                    `;
+                } else if (holidayInfo) {
+                    indicatorsHtml += `
+                        <div class="text-[9px] font-black text-slate-950 dark:text-slate-100 bg-slate-300/80 dark:bg-slate-500/80 px-1 py-0.5 rounded truncate flex items-center gap-0.5">
+                             ${holidayInfo.title}
+                        </div>
+                    `;
+                } else if (isAGMeeting && !isPast) {
+                    indicatorsHtml += `
+                        <div class="text-[10px] font-black text-emerald-950 dark:text-emerald-200 bg-emerald-300 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded-md truncate flex items-center gap-1">
+                            <i data-lucide="check" class="w-2.5 h-2.5 shrink-0 text-emerald-800 dark:text-emerald-400"></i> ${attendeeCount} da
+                        </div>
+                    `;
+                } else if (isAGMeeting && isPast) {
+                    // Für vergangen Tage ein neutraler grauer Anwesenheitsindikator
+                    indicatorsHtml += `
+                        <div class="text-[10px] font-black text-slate-700 dark:text-slate-400 bg-slate-300/60 dark:bg-slate-800/80 px-1.5 py-0.5 rounded-md truncate flex items-center gap-1">
+                            ${attendeeCount} da
+                        </div>
+                    `;
+                }
+
+                if (isOverrideException && !isCancelled) {
+                    indicatorsHtml += `
+                        <div class="text-[9px] font-black text-amber-950 dark:text-amber-200 bg-amber-200 dark:bg-amber-900/50 px-1 py-0.5 rounded-md truncate">
+                            Ausnahme
+                        </div>
+                    `;
+                }
+                
+                if (hasEvent && !isCancelled) {
+                    const matchedEvent = state.events.find(ev => ev.date === dateStr);
+                    indicatorsHtml += `
+                        <div class="text-[10px] font-black text-purple-950 dark:text-purple-200 bg-purple-300 dark:bg-purple-900/50 px-1.5 py-0.5 rounded-md truncate">
+                            ${matchedEvent ? matchedEvent.title : 'Event'}
+                        </div>
+                    `;
+                }
+
+                indicatorsHtml += `</div>`;
+                dayButton.innerHTML = cellInnerHtml + indicatorsHtml;
+                gridContainer.appendChild(dayButton);
+            });
+
+            lucide.createIcons();
+        }
+
+        // ================= STREAMING_CHUNK: POPUP MODAL: DAILY ATTENDANCE =================
+        function openDailyAttendanceModal(dateStr) {
+            const d = parseLocalDate(dateStr);
+            const weekdayName = d.toLocaleDateString('de-DE', { weekday: 'long' });
+            const formattedDate = d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+            const todayStr = getLocalDateString(new Date());
+
+            const isAGMeeting = isDateAGMeeting(dateStr);
+            const holidayInfo = getHolidayForDate(dateStr);
+            const isExceptionActive = state.holidayExceptions.includes(dateStr);
+            const dailyEvent = state.events.find(ev => ev.date === dateStr);
+            const isCancelled = state.cancelledDates && state.cancelledDates[dateStr];
+
+            const originalHoliday = state.holidays.find(h => {
+                return dateStr >= h.startDate && dateStr <= h.endDate;
+            });
+
+            const loggedInMember = getLoggedInUserMember();
+            let rsvpWidgetHtml = "";
+
+            const isPast = dateStr < todayStr;
+
+            if (loggedInMember) {
+                const myStatusKey = `${loggedInMember.id}_${dateStr}`;
+                const currentStatus = state.attendance[myStatusKey];
+
+                if (isPast && !isOrganizerMode) {
+                    rsvpWidgetHtml = `
+                        <div class="p-4 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-center">
+                            <p class="text-xs text-slate-800 dark:text-slate-200 font-bold">Vergangene Termine können nachträglich nicht mehr bearbeitet werden.</p>
+                        </div>
+                    `;
+                } else if (isCancelled) {
+                    rsvpWidgetHtml = `
+                        <div class="p-4 bg-red-100 dark:bg-red-950/30 border border-red-300 dark:border-red-900 rounded-xl text-center">
+                            <p class="text-xs text-red-900 dark:text-red-300 font-bold">Dieser Termin entfällt.</p>
+                        </div>
+                    `;
+                } else {
+                    rsvpWidgetHtml = `
+                        <div class="p-4 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 rounded-xl space-y-3 shadow-sm">
+                            <div class="flex items-center gap-2 text-indigo-900 dark:text-indigo-400">
+                                <i data-lucide="smile" class="w-4 h-4 shrink-0"></i>
+                                <h4 class="text-xs font-black uppercase tracking-wider">Persönliche Rückmeldung</h4>
+                            </div>
+                            <div class="flex flex-wrap sm:flex-nowrap gap-2">
+                                <button onclick="setMyPersonalStatus('${dateStr}', true)" class="flex-1 py-2 px-3 text-xs font-black rounded-lg transition-all border ${currentStatus === true ? 'bg-emerald-700 text-white border-emerald-800 shadow-sm' : 'bg-white dark:bg-slate-900 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-850 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'}">
+                                    Anwesend
+                                </button>
+                                <button onclick="setMyPersonalStatus('${dateStr}', 'excused')" class="flex-1 py-2 px-3 text-xs font-black rounded-lg transition-all border ${currentStatus === 'excused' ? 'bg-amber-600 text-white border-amber-700 shadow-sm' : 'bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-400 border-amber-300 dark:border-amber-850 hover:bg-amber-50 dark:hover:bg-amber-950/40'}">
+                                    Entschuldigt
+                                </button>
+                                <button onclick="setMyPersonalStatus('${dateStr}', 'absent')" class="flex-1 py-2 px-3 text-xs font-black rounded-lg transition-all border ${currentStatus === 'absent' || currentStatus === false ? 'bg-red-700 text-black border-red-800 shadow-sm' : 'bg-black dark:bg-slate-900 text-black dark:text-red-400 border-red-300 dark:border-red-850 hover:bg-red-50 dark:hover:bg-red-950/40'}">
+                                    Abwesend
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            let membersListHtml = "";
+            if (state.members.length === 0) {
+                membersListHtml = `
+                    <div class="text-center py-6 text-slate-700 dark:text-slate-300 text-xs font-bold">
+                        Keine Mitglieder registriert.
+                    </div>
+                `;
+            } else {
+                state.members.forEach(member => {
+                    const attendanceState = state.attendance[`${member.id}_${dateStr}`];
+                    const isChecked = attendanceState === true;
+                    const isExcused = attendanceState === 'excused';
+
+                    let statusBadgeHtml = "";
+                    if (isExcused) {
+                        statusBadgeHtml = `<span class="text-[10px] font-black bg-amber-250 dark:bg-amber-955 text-amber-950 dark:text-amber-200 px-2 py-1 rounded-md border border-amber-400 dark:border-amber-900">Entschuldigt</span>`;
+                    } else if (isChecked) {
+                        statusBadgeHtml = `<span class="text-[10px] font-black bg-emerald-200 dark:bg-emerald-955 text-emerald-955 dark:text-emerald-200 px-2 py-1 rounded-md border border-emerald-400 dark:border-emerald-900">Anwesend</span>`;
+                    } else {
+                        statusBadgeHtml = `<span class="text-[10px] font-black bg-red-200 dark:bg-red-955 text-black dark:text-black px-2 py-1 rounded-md border border-red-400 dark:border-red-900">Abwesend</span>`;
+                    }
+
+                    const canEditRow = isOrganizerMode && (!isPast || isOrganizerMode);
+
+                    membersListHtml += `
+                        <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-300 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 transition-all">
+                            <div class="min-w-0 pr-2">
+                                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(member.name)} <span class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold">(${escapeHtml(member.class || '-')})</span></p>
+                                <p class="text-[9px] text-slate-600 dark:text-slate-400 truncate mt-0.5">${escapeHtml(member.role || 'Mitglied')}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                ${statusBadgeHtml}
+                                ${canEditRow ? `
+                                <input type="checkbox" 
+                                       onchange="toggleDailyAttendanceFromModal('${member.id}', '${dateStr}')" 
+                                       ${isChecked ? 'checked' : ''} 
+                                       class="w-5 h-5 text-indigo-700 border-slate-400 dark:border-slate-600 rounded-lg focus:ring-indigo-500 cursor-pointer">
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            let quickActionsHtml = "";
+            if (isOrganizerMode && !isPast && !isCancelled) {
+                quickActionsHtml = `
+                    <div class="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-850 p-2.5 rounded-xl border border-slate-300 dark:border-slate-800 shadow-sm">
+                        <span class="text-xs font-bold text-slate-800 dark:text-black">Schnellauswahl</span>
+                        <div class="flex gap-2">
+                            <button onclick="bulkMarkDailyAttendance('${dateStr}', true)" class="text-xs font-black text-indigo-800 dark:text-indigo-400 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 shadow-sm">Alle anwesend</button>
+                            <button onclick="bulkMarkDailyAttendance('${dateStr}', false)" class="text-xs font-black text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 shadow-sm">Alle abwesend</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let cancelActionHtml = "";
+            if (isOrganizerMode) {
+                cancelActionHtml = `
+                    <div class="p-3 bg-red-50 dark:bg-red-950/20 border border-red-300 dark:border-red-900/45 rounded-xl space-y-2">
+                        <span class="text-xs font-black text-red-950 dark:text-red-300 block font-bold">Termin entfällt</span>
+                        <div class="flex gap-2">
+                            <input type="text" id="cancel-reason-input" placeholder="Grund des Ausfalls eingeben" value="${isCancelled ? escapeHtml(state.cancelledDates[dateStr]) : ''}" class="flex-grow bg-white dark:bg-slate-900 border border-red-300 dark:border-red-900 rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-white">
+                            <button onclick="saveMeetingCancellation('${dateStr}')" class="bg-red-700 hover:bg-red-800 dark:bg-red-650 dark:hover:bg-red-755 text-white px-3 py-1 rounded-lg text-xs font-bold">
+                                Speichern
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const modalContentHtml = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-start border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <div>
+                            <span class="text-[10px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">${weekdayName}</span>
+                            <h3 class="text-base font-black text-slate-950 dark:text-white">${formattedDate}</h3>
+                        </div>
+                        <button onclick="closeModal()" class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    ${originalHoliday ? `
+                    <div class="bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 text-slate-900 dark:text-black p-3 rounded-xl text-xs flex items-start gap-2 shadow-sm">
+                        <div class="flex-grow">
+                            <p class="font-extrabold text-slate-900 dark:text-black">Sonderzeitraum aktiv</p>
+                            <p class="text-slate-800 dark:text-black mt-0.5 font-bold">Bezeichnung: "${escapeHtml(originalHoliday.title)}"</p>
+                            ${isOrganizerMode ? `
+                            <label class="flex items-center gap-2 mt-2 cursor-pointer bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-300 dark:border-slate-750 w-full sm:w-auto hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
+                                <input type="checkbox" onchange="toggleHolidayException('${dateStr}')" ${isExceptionActive ? 'checked' : ''} class="w-4 h-4 text-indigo-700 border-slate-400 dark:border-slate-600 rounded focus:ring-indigo-500 cursor-pointer">
+                                <span class="text-[10.5px] font-black text-slate-800 dark:text-slate-200">Trotz Ferien Treffen erlauben</span>
+                            </label>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${cancelActionHtml}
+
+                    ${rsvpWidgetHtml}
+
+                    ${isOrganizerMode && !isCancelled ? `
+                    <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-300 dark:border-slate-800 shadow-sm">
+                        <div class="space-y-0.5">
+                            <span class="text-xs font-black text-slate-950 dark:text-black">Als offizielles Treffen werten</span>
+                        </div>
+                        <input type="checkbox" id="modal-ag-toggle" 
+                               onchange="toggleMeetingDateFromModal('${dateStr}')" 
+                               ${isAGMeeting ? 'checked' : ''} 
+                               class="w-5 h-5 text-indigo-700 dark:text-indigo-400 border-slate-400 dark:border-slate-650 rounded focus:ring-indigo-500 cursor-pointer">
+                    </div>
+                    ` : ''}
+
+                    ${dailyEvent && !isCancelled ? `
+                    <div class="bg-purple-100 dark:bg-purple-950/50 border border-purple-300 dark:border-purple-800 text-purple-955 dark:text-purple-200 p-3 rounded-xl text-xs flex items-start gap-2 shadow-sm">
+                        <div>
+                            <p class="font-black">Schulevent geplant</p>
+                            <p class="text-purple-900 dark:text-purple-300 mt-0.5 font-bold">${escapeHtml(dailyEvent.title)} (Besetzung: ${dailyEvent.staff.length}/${dailyEvent.requiredStaff})</p>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${quickActionsHtml}
+
+                    <div class="space-y-1.5 overflow-y-auto max-h-[260px] pr-1 custom-scrollbar">
+                        ${membersListHtml}
+                    </div>
+
+                    <div class="flex pt-2">
+                        <button onclick="closeModal()" class="w-full py-3 bg-slate-900 hover:bg-slate-950 dark:bg-slate-800 dark:hover:bg-slate-750 text-white font-extrabold rounded-xl text-xs transition-all active:scale-95 shadow-md">Fertig</button>
+                    </div>
+                </div>
+            `;
+
+            openModal(modalContentHtml);
+        }
+
+        // ================= STREAMING_CHUNK: ACTIONS & FUNCTIONS FOR ATTENDANCE =================
+        function saveMeetingCancellation(dateStr) {
+            if (!isOrganizerMode) return;
+            const inputVal = document.getElementById("cancel-reason-input").value.trim();
+            if (inputVal) {
+                state.cancelledDates[dateStr] = inputVal;
+                showToast("Termin wurde abgesagt");
+            } else {
+                delete state.cancelledDates[dateStr];
+                showToast("Terminabsage aufgehoben");
+            }
+            saveState();
+            renderCalendarView();
+            closeModal();
+            openDailyAttendanceModal(dateStr);
+        }
+
+        function setMyPersonalStatus(dateStr, status) {
+            const loggedInMember = getLoggedInUserMember();
+            if (!loggedInMember) return;
+
+            const key = `${loggedInMember.id}_${dateStr}`;
+            state.attendance[key] = status;
+
+            if (status === true && !state.meetings.includes(dateStr) && !isDateAGMeeting(dateStr)) {
+                state.meetings.push(dateStr);
+                state.meetings.sort();
+            }
+
+            saveState();
+            renderCalendarView();
+            closeModal();
+            openDailyAttendanceModal(dateStr);
+            showToast("Persönliche Rückmeldung erfolgreich eingetragen");
+        }
+
+        function toggleHolidayException(dateStr) {
+            if (!isOrganizerMode) return;
+
+            const idx = state.holidayExceptions.indexOf(dateStr);
+            if (idx > -1) {
+                state.holidayExceptions.splice(idx, 1);
+                showToast("Ferien-Ausnahme deaktiviert");
+            } else {
+                state.holidayExceptions.push(dateStr);
+                showToast("Ausnahme hinzugefügt");
+            }
+
+            saveState();
+            renderAll();
+            closeModal();
+            openDailyAttendanceModal(dateStr);
+        }
+
+        function toggleDailyAttendanceFromModal(memberId, dateStr) {
+            if (!isOrganizerMode) return;
+
+            const key = `${memberId}_${dateStr}`;
+            const isChecked = state.attendance[key] === true;
+            state.attendance[key] = !isChecked;
+
+            if (state.attendance[key] === true && !state.meetings.includes(dateStr) && !isDateAGMeeting(dateStr)) {
+                state.meetings.push(dateStr);
+                state.meetings.sort();
+            }
+
+            saveState();
+            renderCalendarView();
+            showToast("Anwesenheit aktualisiert");
+        }
+
+        function toggleMeetingDateFromModal(dateStr) {
+            if (!isOrganizerMode) return;
+
+            const toggle = document.getElementById("modal-ag-toggle");
+            const isChecked = toggle ? toggle.checked : false;
+
+            if (isChecked) {
+                if (!state.meetings.includes(dateStr)) {
+                    state.meetings.push(dateStr);
+                    state.meetings.sort();
+                }
+            } else {
+                state.meetings = state.meetings.filter(date => date !== dateStr);
+            }
+
+            saveState();
+            renderCalendarView();
+            showToast(isChecked ? "Termin registriert" : "Als AG-Termin entfernt");
+        }
+
+        function bulkMarkDailyAttendance(dateStr, shouldAttend) {
+            if (!isOrganizerMode) return;
+            if (state.members.length === 0) return;
+
+            if (shouldAttend && !state.meetings.includes(dateStr) && !isDateAGMeeting(dateStr)) {
+                state.meetings.push(dateStr);
+                state.meetings.sort();
+            }
+
+            state.members.forEach(member => {
+                state.attendance[`${member.id}_${dateStr}`] = shouldAttend;
+            });
+
+            saveState();
+            renderCalendarView();
+            
+            // Ansicht aktualisieren
+            closeModal();
+            openDailyAttendanceModal(dateStr);
+            showToast(shouldAttend ? "Alle als anwesend markiert" : "Alle als abwesend markiert");
+        }
+
+        // ================= STREAMING_CHUNK: DIRECT HOLIDAY ENTRY VIA MODAL =================
+        function openAddHolidayModal() {
+            if (!isOrganizerMode) return;
+
+            const today = getLocalDateString(new Date());
+
+            const content = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <h3 class="text-lg font-black text-slate-900 dark:text-white">
+                            Ferien eintragen
+                        </h3>
+                        <button onclick="closeModal()" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 p-1 rounded-lg">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label for="holiday-modal-title" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase">Bezeichnung</label>
+                            <input type="text" id="holiday-modal-title" placeholder="z.B. Herbstferien" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="holiday-modal-start" class="text-[10px] font-black text-slate-700 dark:text-slate-400 uppercase">Startdatum</label>
+                                <input type="date" id="holiday-modal-start" value="${today}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-2 py-1.5 text-xs font-sans font-bold text-slate-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label for="holiday-modal-end" class="text-[10px] font-black text-slate-700 dark:text-slate-400 uppercase">Enddatum</label>
+                                <input type="date" id="holiday-modal-end" value="${today}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-2 py-1.5 text-xs font-sans font-bold text-slate-900 dark:text-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="closeModal()" class="flex-1 py-3 text-sm font-bold text-slate-700 bg-slate-200 dark:bg-slate-800 rounded-xl transition-all">Abbrechen</button>
+                        <button onclick="submitAddHolidayFromModal()" class="flex-1 py-3 text-sm font-black text-white bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 rounded-xl transition-all shadow-sm">Hinzufügen</button>
+                    </div>
+                </div>
+            `;
+            openModal(content);
+        }
+
+        function submitAddHolidayFromModal() {
+            if (!isOrganizerMode) return;
+
+            const start = document.getElementById("holiday-modal-start").value;
+            const end = document.getElementById("holiday-modal-end").value;
+            const title = document.getElementById("holiday-modal-title").value.trim();
+
+            if (!start || !end || !title) {
+                showToast("Bitte fülle alle Pflichtfelder aus", "error");
+                return;
+            }
+
+            state.holidays.push({
+                id: `h_${Date.now()}`,
+                title: title,
+                startDate: start,
+                endDate: end
+            });
+
+            saveState();
+            closeModal();
+            renderAll();
+            showToast(`Sondertermin ${title} erfolgreich hinzugefügt`);
+        }
+
+        function deleteHoliday(id) {
+            if (!isOrganizerMode) return;
+            state.holidays = state.holidays.filter(h => h.id !== id);
+            saveState();
+            renderAll();
+            showToast("Sondertermin entfernt");
+        }
+
+        function renderHolidaysList() {
+            const container = document.getElementById("holidays-list-container");
+            if (!container) return;
+            container.innerHTML = "";
+
+            if (state.holidays.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-700 dark:text-slate-300 italic text-center py-3 font-bold">Keine Ferienzeiträume erfasst</p>`;
+                return;
+            }
+
+            state.holidays.forEach(h => {
+                const sDate = parseLocalDate(h.startDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                const eDate = parseLocalDate(h.endDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                
+                const div = document.createElement("div");
+                div.className = "flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-350 dark:border-slate-800 text-xs text-slate-900 dark:text-white shadow-sm";
+                div.innerHTML = `
+                    <div class="truncate mr-2">
+                        <span class="font-extrabold block text-slate-950 dark:text-white">${escapeHtml(h.title)}</span>
+                        <span class="block text-[10px] text-slate-700 dark:text-slate-400 font-bold mt-0.5">${sDate} bis ${eDate}</span>
+                    </div>
+                    ${isOrganizerMode ? `
+                    <button onclick="deleteHoliday('${h.id}')" class="text-slate-500 dark:text-slate-400 hover:text-red-700 dark:hover:text-red-400 transition-colors shrink-0 p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>` : ''}
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        // ================= STREAMING_CHUNK: TAB MEMBERS =================
+        function toggleMemberStatsDetails(memberId) {
+            if (!isOrganizerMode) return;
+            expandedMemberStats[memberId] = !expandedMemberStats[memberId];
+            renderMembersTab();
+        }
+
+        function renderMembersTab() {
+            const tableBody = document.getElementById("members-table-body");
+            const emptyState = document.getElementById("members-empty-state");
+            const thActions = document.getElementById("th-members-actions");
+            tableBody.innerHTML = "";
+
+            if (state.members.length === 0) {
+                emptyState.classList.remove("hidden");
+                return;
+            } else {
+                emptyState.classList.add("hidden");
+            }
+
+            const activeMeetings = getEvaluatedMeetingsCount();
+
+            state.members.forEach(member => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-100 dark:hover:bg-slate-850 transition-colors border-b border-slate-200 dark:border-slate-800";
+
+                let formattedDate = "-";
+                if (member.joinDate) {
+                    const d = parseLocalDate(member.joinDate);
+                    formattedDate = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                }
+
+                let attendedCount = 0;
+                let excusedCount = 0;
+                activeMeetings.forEach(date => {
+                    const rawStatus = state.attendance[`${member.id}_${date}`];
+                    if (rawStatus === true) {
+                        attendedCount++;
+                    } else if (rawStatus === 'excused') {
+                        excusedCount++;
+                    }
+                });
+
+                const effectiveTotal = Math.max(activeMeetings.length - excusedCount, 0);
+                const percentage = effectiveTotal > 0 ? Math.round((attendedCount / effectiveTotal) * 100) : 0;
+
+                const isExpanded = !!expandedMemberStats[member.id];
+
+                const matchedUser = state.users.find(u => u.memberId === member.id);
+                let avatarHtml = "";
+                if (matchedUser && matchedUser.profilePic) {
+                    avatarHtml = `<img src="${matchedUser.profilePic}" class="w-10 h-10 rounded-full object-cover border border-slate-400 dark:border-slate-750 shrink-0 shadow-sm">`;
+                } else {
+                    avatarHtml = `
+                        <div class="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-400 dark:border-slate-700 flex items-center justify-center text-slate-800 dark:text-slate-200 font-black text-sm shrink-0">
+                            ${member.name.charAt(0).toUpperCase()}
+                        </div>
+                    `;
+                }
+
+                let actionsCellHtml = "";
+                if (isOrganizerMode) {
+                    thActions.className = "py-4 px-6 text-right font-sans";
+                    actionsCellHtml = `
+                        <div class="flex justify-end gap-2">
+                            <button onclick="toggleMemberStatsDetails('${member.id}')" class="text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-350 dark:border-slate-750 bg-white dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-800 dark:hover:text-indigo-400 transition-colors flex items-center gap-1 shadow-sm">
+                                <i data-lucide="${isExpanded ? 'eye-off' : 'trending-up'}" class="w-4 h-4"></i>
+                                Statistik
+                            </button>
+                            <button onclick="openEditMemberModal('${member.id}')" class="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-350 hover:text-indigo-800 dark:hover:text-indigo-400 transition-colors">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="confirmDeleteMember('${member.id}', '${member.name}')" class="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-955 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-350 hover:text-red-755 transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    thActions.className = "py-4 px-6 text-right text-slate-650 dark:text-slate-450 font-bold font-sans";
+                    actionsCellHtml = `<span class="text-xs font-bold text-slate-750 dark:text-slate-350">-</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-6 font-bold text-slate-950 dark:text-white flex items-center gap-3">
+                        ${avatarHtml}
+                        <div class="min-w-0">
+                            <span class="block font-black">${escapeHtml(member.name)}</span>
+                            ${matchedUser && matchedUser.bio ? `<span class="block text-[11px] text-slate-600 dark:text-slate-400 max-w-xs truncate italic">${escapeHtml(matchedUser.bio)}</span>` : ''}
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-6 text-slate-800 dark:text-slate-200 font-bold">${escapeHtml(member.class || "-")}</td>
+                    <td class="py-3.5 px-6">
+                        <!-- Spezialgebiet als reiner Text -->
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                            ${escapeHtml(member.role || "Allrounder")}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-6 text-slate-800 dark:text-slate-200 font-bold">${formattedDate}</td>
+                    <td class="py-3.5 px-6 text-slate-755 dark:text-slate-300 font-semibold max-w-xs truncate" title="${escapeHtml(member.notes || '')}">${escapeHtml(member.notes || "-")}</td>
+                    <td class="py-3.5 px-6 text-right">${actionsCellHtml}</td>
+                `;
+                tableBody.appendChild(tr);
+
+                if (isExpanded && isOrganizerMode) {
+                    const statsTr = document.createElement("tr");
+                    statsTr.className = "bg-indigo-50/40 dark:bg-slate-850/50";
+                    statsTr.innerHTML = `
+                        <td colspan="6" class="px-6 py-4 border-b border-indigo-200 dark:border-slate-800">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div class="space-y-1">
+                                    <h5 class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Ergebnis Anwesenheitskontrolle</h5>
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white">
+                                        Anwesend: <span class="text-emerald-700 dark:text-emerald-400 font-black">${attendedCount}</span> | Entschuldigt: <span class="text-amber-600 dark:text-amber-400 font-black">${excusedCount}</span> | Pool: <span class="text-slate-900 dark:text-white font-black">${activeMeetings.length} Treffen</span>
+                                    </p>
+                                </div>
+                                <div class="w-full sm:w-64 space-y-1">
+                                    <div class="flex justify-between text-xs font-black text-indigo-900 dark:text-indigo-400">
+                                        <span>Beteiligungsquote</span>
+                                        <span>${percentage}%</span>
+                                    </div>
+                                    <div class="w-full bg-slate-300 dark:bg-slate-755 h-3 rounded-full overflow-hidden border border-slate-400 dark:border-slate-700">
+                                        <div class="bg-indigo-700 dark:bg-indigo-500 h-full rounded-full transition-all duration-300" style="width: ${percentage}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(statsTr);
+                }
+            });
+            lucide.createIcons();
+        }
+
+        // ================= STREAMING_CHUNK: MEMBER CRUD OPERATION MODALS =================
+        function openAddMemberModal() {
+            if (!isOrganizerMode) return;
+
+            const today = getLocalDateString(new Date());
+            const content = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <h3 class="text-lg font-black text-slate-900 dark:text-white">Neues Mitglied hinzufügen</h3>
+                        <button onclick="closeModal()" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label for="member-name-input" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Name des Technikers</label>
+                            <input type="text" id="member-name-input" placeholder="Name" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label for="member-class-input" class="text-xs font-black text-black dark:text-black uppercase tracking-wider">Klasse / Stufe</label>
+                                <input type="text" id="member-class-input" placeholder="z.B. 9b" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                            </div>
+                            <div class="space-y-1">
+                                <label for="member-joindate-input" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Beitrittsdatum</label>
+                                <input type="date" id="member-joindate-input" value="${today}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans font-bold text-slate-900 dark:text-white">
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label for="member-role-input" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Spezialisierung / Rolle</label>
+                            <input type="text" id="member-role-input" placeholder="z.B. Tontechnik, Licht" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                        </div>
+                        <div class="space-y-1">
+                            <label for="member-notes-input" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Notizen / Sonstiges</label>
+                            <textarea id="member-notes-input" placeholder="Besondere Kenntnisse" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 h-20 resize-none font-bold text-slate-900 dark:text-white"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="closeModal()" class="flex-1 py-3 text-sm font-bold text-slate-700 bg-slate-200 dark:bg-slate-800 rounded-xl transition-all font-sans">Abbrechen</button>
+                        <button onclick="submitAddMember()" class="flex-1 py-3 text-sm font-black text-white bg-indigo-700 dark:bg-indigo-600 hover:bg-indigo-800 dark:hover:bg-indigo-700 rounded-xl transition-all shadow-sm font-sans">Hinzufügen</button>
+                    </div>
+                </div>
+            `;
+            openModal(content);
+            document.getElementById("member-name-input").focus();
+        }
+
+        function submitAddMember() {
+            const name = document.getElementById("member-name-input").value.trim();
+            const classVal = document.getElementById("member-class-input").value.trim();
+            const joinDate = document.getElementById("member-joindate-input").value;
+            const role = document.getElementById("member-role-input").value.trim();
+            const notes = document.getElementById("member-notes-input").value.trim();
+
+            if (!name) {
+                showToast("Bitte gib einen Namen ein", "error");
+                return;
+            }
+
+            const newId = `mem_${Date.now()}`;
+            state.members.push({
+                id: newId,
+                name: name,
+                class: classVal || "-",
+                joinDate: joinDate || getLocalDateString(new Date()),
+                role: role || "Allrounder",
+                notes: notes || ""
+            });
+
+            saveState();
+            closeModal();
+            renderAll();
+            showToast(`${name} wurde erfolgreich hinzugefügt`);
+        }
+
+        function openEditMemberModal(memberId) {
+            if (!isOrganizerMode) return;
+
+            const member = state.members.find(m => m.id === memberId);
+            if (!member) return;
+            const content = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <h3 class="text-lg font-black text-slate-900 dark:text-white">Mitgliedsdetails bearbeiten</h3>
+                        <button onclick="closeModal()" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label for="edit-member-name" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Name des Technikers</label>
+                            <input type="text" id="edit-member-name" value="${escapeHtml(member.name)}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label for="edit-member-class" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Klasse / Stufe</label>
+                                <input type="text" id="edit-member-class" value="${escapeHtml(member.class || '')}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                            </div>
+                            <div class="space-y-1">
+                                <label for="edit-member-joindate" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Beitrittsdatum</label>
+                                <input type="date" id="edit-member-joindate" value="${member.joinDate || ''}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans font-bold text-slate-900 dark:text-white">
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label for="edit-member-role" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Spezialisierung / Rolle</label>
+                            <input type="text" id="edit-member-role" value="${escapeHtml(member.role || '')}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                        </div>
+                        <div class="space-y-1">
+                            <label for="edit-member-notes" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Notizen / Sonstiges</label>
+                            <textarea id="edit-member-notes" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 h-20 resize-none font-bold text-slate-900 dark:text-white">${escapeHtml(member.notes || '')}</textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="closeModal()" class="flex-1 py-3 text-sm font-bold text-slate-700 bg-slate-200 dark:bg-slate-800 rounded-xl transition-all">Abbrechen</button>
+                        <button onclick="submitEditMember('${memberId}')" class="flex-1 py-3 text-sm font-black text-white bg-indigo-700 dark:bg-indigo-600 hover:bg-indigo-800 dark:hover:bg-indigo-700 rounded-xl transition-all shadow-sm">Speichern</button>
+                    </div>
+                </div>
+            `;
+            openModal(content);
+            document.getElementById("edit-member-name").focus();
+        }
+
+        // ================= STREAMING_CHUNK: SUBMIT EDIT MEMBER & DELETE LOGIC =================
+        function submitEditMember(memberId) {
+            const name = document.getElementById("edit-member-name").value.trim();
+            const classVal = document.getElementById("edit-member-class").value.trim();
+            const joinDate = document.getElementById("edit-member-joindate").value;
+            const role = document.getElementById("edit-member-role").value.trim();
+            const notes = document.getElementById("edit-member-notes").value.trim();
+
+            if (!name) {
+                showToast("Bitte gib einen Namen ein", "error");
+                return;
+            }
+
+            const member = state.members.find(m => m.id === memberId);
+            if (!member) return;
+
+            const oldName = member.name;
+            member.name = name;
+            member.class = classVal || "-";
+            member.joinDate = joinDate || getLocalDateString(new Date());
+            member.role = role || "Allrounder";
+            member.notes = notes || "";
+
+            state.events.forEach(ev => {
+                ev.staff = ev.staff.map(n => n === oldName ? name : n);
+            });
+
+            saveState();
+            closeModal();
+            renderAll();
+            showToast("Mitglied erfolgreich bearbeitet");
+        }
+
+        function confirmDeleteMember(memberId, memberName) {
+            if (!isOrganizerMode) return;
+
+            const content = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center text-red-755 border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <h3 class="text-lg font-black font-sans">Mitglied entfernen</h3>
+                    </div>
+                    <p class="text-sm text-slate-800 dark:text-slate-200 font-bold">Möchtest du ${memberName} wirklich entfernen? Alle Anwesenheitsaufzeichnungen werden gelöscht.</p>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="closeModal()" class="flex-1 py-3 text-sm font-bold text-slate-700 bg-slate-200 dark:bg-slate-800 rounded-xl transition-all">Abbrechen</button>
+                        <button onclick="submitDeleteMember('${memberId}')" class="flex-1 py-3 text-sm font-black text-white bg-red-700 dark:bg-red-650 hover:bg-red-800 dark:hover:bg-red-755 rounded-xl transition-all">Entfernen</button>
+                    </div>
+                </div>
+            `;
+            openModal(content);
+        }
+
+        function submitDeleteMember(memberId) {
+            const member = state.members.find(m => m.id === memberId);
+            const name = member ? member.name : "Mitglied";
+
+            state.members = state.members.filter(m => m.id !== memberId);
+
+            state.meetings.forEach(date => {
+                delete state.attendance[`${memberId}_${date}`];
+            });
+
+            state.events.forEach(ev => {
+                ev.staff = ev.staff.filter(n => n !== name);
+            });
+
+            saveState();
+            closeModal();
+            renderAll();
+            showToast(`${name} wurde entfernt`);
+        }
+
+        // ================= STREAMING_CHUNK: TAB EVENTS PLANNER RENDERING =================
+        function renderEventsGrid() {
+            const grid = document.getElementById("events-grid");
+            const noEventsState = document.getElementById("no-events-state");
+            grid.innerHTML = "";
+
+            if (state.events.length === 0) {
+                noEventsState.classList.remove("hidden");
+                grid.classList.add("hidden");
+                return;
+            } else {
+                noEventsState.classList.add("hidden");
+                grid.classList.remove("hidden");
+            }
+
+            const loggedInMember = getLoggedInUserMember();
+
+            state.events.forEach(event => {
+                const div = document.createElement("div");
+                div.className = "bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl shadow-md hover:shadow-lg transition-all flex flex-col justify-between overflow-hidden relative";
+
+                const currentCount = event.staff.length;
+                const reqCount = event.requiredStaff;
+                const spotsLeft = reqCount - currentCount;
+
+                let statusBadge = "";
+                let cardAccent = "border-t-4 border-t-indigo-600 dark:border-t-indigo-500";
+                
+                if (spotsLeft > 0) {
+                    statusBadge = `<span class="bg-amber-100 dark:bg-amber-955/55 text-amber-950 dark:text-amber-300 border border-amber-400 dark:border-amber-900 text-xs font-black px-3 py-1.5 rounded-lg shadow-sm">
+                        -${spotsLeft}
+                    </span>`;
+                } else if (spotsLeft === 0) {
+                    statusBadge = `<span class="bg-emerald-100 dark:bg-emerald-955/55 text-emerald-955 dark:text-emerald-300 border border-emerald-500 dark:border-emerald-900 text-xs font-black px-3 py-1.5 rounded-lg shadow-sm">
+                        Besetzt
+                    </span>`;
+                    cardAccent = "border-t-4 border-t-emerald-600 dark:border-t-emerald-500";
+                } else {
+                    statusBadge = `<span class="bg-rose-100 dark:bg-rose-955/55 text-rose-955 dark:text-rose-300 border border-rose-500 dark:border-rose-900 text-xs font-black px-3 py-1.5 rounded-lg shadow-sm">
+                        +${Math.abs(spotsLeft)}
+                    </span>`;
+                    cardAccent = "border-t-4 border-t-rose-600 dark:border-t-rose-500";
+                }
+
+                const d = parseLocalDate(event.date);
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedDate = d.toLocaleDateString('de-DE', options);
+
+                const availableMembers = state.members.filter(m => !event.staff.includes(m.name));
+                let dropdownOptionsHtml = `<option value="">-- Mitglied auswählen --</option>`;
+                availableMembers.forEach(m => {
+                    dropdownOptionsHtml += `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}</option>`;
+                });
+
+                let staffListHtml = "";
+                if (event.staff.length === 0) {
+                    staffListHtml = `<p class="text-xs text-slate-700 dark:text-slate-400 font-bold italic py-1">Noch keine Helfer eingetragen</p>`;
+                } else {
+                    event.staff.forEach((name, index) => {
+                        const isOverLimit = index >= reqCount;
+                        
+                        let actionBtnHtml = "";
+                        // Admins können jeden entfernen, Gäste können sich nur selbst entfernen
+                        const isSelf = loggedInMember && loggedInMember.name === name;
+                        if (isOrganizerMode || isSelf) {
+                            actionBtnHtml = `
+                                <button onclick="removeStaffFromEvent('${event.id}', '${escapeHtml(name)}')" class="text-slate-500 dark:text-slate-400 hover:text-red-700 dark:hover:text-red-400 p-1 rounded-md hover:bg-white dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition-all shadow-sm">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                </button>
+                            `;
+                        }
+
+                        staffListHtml += `
+                            <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-750 px-3 py-1.5 rounded-xl text-xs transition-colors ${isOverLimit ? 'bg-rose-50 dark:bg-rose-955/20 border-rose-300 dark:border-rose-900' : ''}">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-5 h-5 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-[10px] font-black text-slate-800 dark:text-slate-200 ${isOverLimit ? 'bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-200 border border-rose-400 dark:border-rose-900 font-sans' : 'font-sans'}">
+                                        ${index + 1}
+                                    </span>
+                                    <span class="font-extrabold text-slate-900 dark:text-white">${escapeHtml(name)}</span>
+                                    ${isOverLimit ? '<span class="text-[9px] text-rose-900 dark:text-rose-300 font-black px-1.5 py-0.5 rounded bg-rose-200 dark:bg-rose-955 border border-rose-300 dark:border-rose-900">Warteliste</span>' : ''}
+                                </div>
+                                ${actionBtnHtml}
+                            </div>
+                        `;
+                    });
+                }
+
+                // Generierung des Buchungspanels
+                let bottomActionPanelHtml = "";
+                if (isOrganizerMode) {
+                    bottomActionPanelHtml = `
+                        <div class="p-4 bg-slate-100 dark:bg-slate-850 border-t border-slate-300 dark:border-slate-800 flex flex-col gap-2">
+                            <div class="flex gap-2">
+                                <select id="select-member-${event.id}" class="flex-grow bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer font-sans">
+                                    ${dropdownOptionsHtml}
+                                </select>
+                                <button onclick="addStaffToEvent('${event.id}')" class="px-4 py-2 bg-indigo-700 dark:bg-indigo-600 hover:bg-indigo-800 dark:hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all shadow-sm flex items-center justify-center gap-1 shrink-0 font-sans">
+                                    Eintragen
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else if (loggedInMember) {
+                    // Mitglieder (Gäste) können nur sich selbst ein- oder austragen
+                    const isRegistered = event.staff.includes(loggedInMember.name);
+                    if (isRegistered) {
+                        bottomActionPanelHtml = `
+                            <div class="p-4 bg-slate-100 dark:bg-slate-850 border-t border-slate-300 dark:border-slate-800 flex flex-col gap-2">
+                                <button onclick="removeStaffFromEvent('${event.id}', '${escapeHtml(loggedInMember.name)}')" class="w-full py-2 bg-red-700 hover:bg-red-800 text-white rounded-xl text-xs font-black transition-all shadow-sm flex items-center justify-center gap-1">
+                                    Meine Teilnahme absagen
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        bottomActionPanelHtml = `
+                            <div class="p-4 bg-slate-100 dark:bg-slate-850 border-t border-slate-300 dark:border-slate-800 flex flex-col gap-2">
+                                <button onclick="addStaffToEventSelf('${event.id}', '${escapeHtml(loggedInMember.name)}')" class="w-full py-2 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all shadow-sm flex items-center justify-center gap-1">
+                                    Mich für dieses Event eintragen
+                                </button>
+                            </div>
+                        `;
+                    }
+                } else {
+                    bottomActionPanelHtml = `
+                        <div class="p-4 bg-slate-100 dark:bg-slate-850 border-t border-slate-300 dark:border-slate-800 text-center text-xs text-slate-500">
+                            Kein verknüpfter Techniker-Account vorhanden
+                        </div>
+                    `;
+                }
+
+                let deleteCardBtnHtml = "";
+                if (isOrganizerMode) {
+                    deleteCardBtnHtml = `
+                        <button onclick="confirmDeleteEvent('${event.id}', '${escapeHtml(event.title)}')" class="text-slate-400 hover:text-red-700 dark:hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-300 dark:hover:border-slate-750 transition-colors" title="Event-Planung löschen">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="p-6 space-y-4 flex-grow ${cardAccent}">
+                        <div class="flex justify-between items-start gap-4">
+                            <div>
+                                <h3 class="font-black text-slate-950 dark:text-white text-base leading-snug hover:text-indigo-700 dark:hover:text-indigo-400 transition-colors">${escapeHtml(event.title)}</h3>
+                                <p class="text-xs text-slate-700 dark:text-slate-350 font-bold mt-1.5 flex items-center gap-1">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-750 dark:text-slate-400"></i> ${formattedDate}
+                                </p>
+                            </div>
+                            ${deleteCardBtnHtml}
+                        </div>
+
+                        <div class="flex items-center">
+                            ${statusBadge}
+                        </div>
+
+                        ${event.notes ? `
+                        <div class="bg-indigo-50 dark:bg-slate-850 p-2.5 rounded-xl border border-indigo-200 dark:border-indigo-950">
+                            <p class="text-[11px] font-black text-indigo-950 dark:text-indigo-300 uppercase tracking-wider mb-0.5">Notizen / Infos</p>
+                            <p class="text-xs text-indigo-900 dark:text-indigo-200 font-bold whitespace-pre-line leading-relaxed">${escapeHtml(event.notes)}</p>
+                        </div>
+                        ` : ''}
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-350">
+                                <span>Eingeteilte Techniker</span>
+                                <span>${currentCount} / ${reqCount}</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-300 dark:border-slate-700">
+                                <div class="bg-indigo-700 dark:bg-indigo-500 h-full transition-all duration-300" style="width: ${Math.min((currentCount / reqCount) * 100, 100)}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+                            <p class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Eingeteiltes Team</p>
+                            <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                                ${staffListHtml}
+                            </div>
+                        </div>
+                    </div>
+                    ${bottomActionPanelHtml}
+                `;
+
+                grid.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        // ================= STREAMING_CHUNK: EVENT OPERATIONS & MUTATIONS =================
+        function openAddEventModal() {
+            const today = getLocalDateString(new Date());
+
+            const content = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <h3 class="text-lg font-black text-slate-955 dark:text-white">Neues Event erstellen</h3>
+                        <button onclick="closeModal()" class="text-slate-500 hover:text-slate-800 dark:text-slate-400 p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label for="event-title-input" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Name des Events</label>
+                            <input type="text" id="event-title-input" placeholder="z.B. Theateraufführung Aula" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-black text-slate-900 dark:text-white">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label for="event-date-input" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Datum</label>
+                                <input type="date" id="event-date-input" value="${today}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans font-black text-slate-900 dark:text-white">
+                            </div>
+                            <div class="space-y-1">
+                                <label for="event-staff-input" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Benötigte Helfer</label>
+                                <input type="number" id="event-staff-input" min="1" max="10" value="3" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-black text-slate-900 dark:text-white">
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label for="event-notes-input" class="text-xs font-black text-slate-700 dark:text-slate-400 uppercase tracking-wider">Notizen / Anforderungen</label>
+                            <textarea id="event-notes-input" placeholder="z.B. XLR Kabel" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 h-20 resize-none font-bold text-slate-900 dark:text-white"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="closeModal()" class="flex-1 py-3 text-sm font-bold text-slate-755 dark:text-slate-300 bg-slate-200 dark:bg-slate-800 rounded-xl transition-all">Abbrechen</button>
+                        <button onclick="submitAddEvent()" class="flex-1 py-3 text-sm font-black text-white bg-indigo-700 dark:bg-indigo-600 hover:bg-indigo-800 dark:hover:bg-indigo-700 rounded-xl transition-all shadow-sm font-sans">Erstellen</button>
+                    </div>
+                </div>
+            `;
+            openModal(content);
+            document.getElementById("event-title-input").focus();
+        }
+
+        function submitAddEvent() {
+            const titleInput = document.getElementById("event-title-input");
+            const dateInput = document.getElementById("event-date-input");
+            const staffInput = document.getElementById("event-staff-input");
+            const notesInput = document.getElementById("event-notes-input");
+
+            const title = titleInput.value.trim();
+            const dateVal = dateInput.value;
+            const staffCount = parseInt(staffInput.value, 10);
+            const notes = notesInput.value.trim();
+
+            if (!title) {
+                showToast("Bitte gib einen Eventnamen ein", "error");
+                return;
+            }
+            if (!dateVal) {
+                showToast("Bitte wähle ein Datum aus", "error");
+                return;
+            }
+            if (isNaN(staffCount) || staffCount < 1) {
+                showToast("Bitte gib an wie viele Techniker benötigt werden", "error");
+                return;
+            }
+
+            const newEvent = {
+                id: `ev_${Date.now()}`,
+                title: title,
+                date: dateVal,
+                requiredStaff: staffCount,
+                staff: [],
+                notes: notes
+            };
+
+            state.events.push(newEvent);
+            state.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            saveState();
+            closeModal();
+            renderAll();
+            showToast("Event erfolgreich angelegt");
+        }
+
+        function confirmDeleteEvent(eventId, eventTitle) {
+            const content = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center text-red-700 border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <h3 class="text-lg font-black font-sans">Event löschen</h3>
+                    </div>
+                    <p class="text-sm text-slate-800 dark:text-slate-200 font-bold">Möchtest du das Event ${eventTitle} wirklich unwiderruflich löschen? Alle Einteilungen gehen verloren.</p>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="closeModal()" class="flex-1 py-3 text-sm font-bold text-slate-700 bg-slate-200 dark:bg-slate-800 rounded-xl transition-all">Abbrechen</button>
+                        <button onclick="submitDeleteEvent('${eventId}')" class="flex-1 py-3 text-sm font-black text-white bg-red-700 dark:bg-red-650 hover:bg-red-800 dark:hover:bg-red-755 rounded-xl transition-all font-sans">Löschen</button>
+                    </div>
+                </div>
+            `;
+            openModal(content);
+        }
+
+        function submitDeleteEvent(eventId) {
+            state.events = state.events.filter(ev => ev.id !== eventId);
+            saveState();
+            closeModal();
+            renderAll();
+            showToast("Event gelöscht");
+        }
+
+        // ================= STREAMING_CHUNK: HELPER ACTIONS FOR STAFF REGISTRATION =================
+        function addStaffToEvent(eventId) {
+            const select = document.getElementById(`select-member-${eventId}`);
+            const selectedName = select.value;
+            
+            if (!selectedName) {
+                showToast("Bitte wähle zuerst ein Mitglied aus", "error");
+                return;
+            }
+
+            const event = state.events.find(ev => ev.id === eventId);
+            if (!event) return;
+
+            if (event.staff.includes(selectedName)) {
+                showToast("Techniker ist bereits eingetragen", "error");
+                return;
+            }
+
+            event.staff.push(selectedName);
+            saveState();
+            renderEventsGrid();
+            lucide.createIcons();
+            showToast(`${selectedName} eingeteilt`);
+        }
+
+        function addStaffToEventSelf(eventId, name) {
+            const event = state.events.find(ev => ev.id === eventId);
+            if (!event) return;
+
+            if (event.staff.includes(name)) {
+                showToast("Du bist bereits eingetragen", "error");
+                return;
+            }
+
+            event.staff.push(name);
+            saveState();
+            renderEventsGrid();
+            lucide.createIcons();
+            showToast("Erfolgreich für das Event eingetragen");
+        }
+
+        function removeStaffFromEvent(eventId, name) {
+            const event = state.events.find(ev => ev.id === eventId);
+            if (!event) return;
+
+            event.staff = event.staff.filter(n => n !== name);
+            saveState();
+            renderEventsGrid();
+            lucide.createIcons();
+            showToast("Vom Event abgemeldet");
+        }
+
+        // ================= STREAMING_CHUNK: TAB ADMIN CONFIGURATIONS =================
+        function updateRecurringDaySetting() {
+            if (!isOrganizerMode) return;
+            const val = document.getElementById("recurring-day-select").value;
+            state.recurringDay = val === "null" ? null : parseInt(val);
+            saveState();
+            renderAll();
+            showToast("Serientermine wurden neu berechnet");
+        }
+
+        function updateRecurringStartDate() {
+            if (!isOrganizerMode) return;
+            const val = document.getElementById("recurring-start-date").value;
+            state.recurringStartDate = val;
+            saveState();
+            renderAll();
+            showToast("Berechnungs-Zeitrahmen aktualisiert");
+        }
+
+        // ================= DYNAMIC USER MANAGEMENT =================
+        function renderUsersTable() {
+            const body = document.getElementById("users-table-body");
+            if (!body) return;
+            body.innerHTML = "";
+
+            state.users.forEach(u => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors text-slate-800 dark:text-slate-200 border-b border-slate-300 dark:border-slate-800";
+
+                let actionHtml = "-";
+                const totalAdmins = state.users.filter(usr => usr.role === "admin").length;
+                const canDelete = (u.username !== currentUserName && (u.role !== "admin" || totalAdmins > 1));
+
+                if (isOrganizerMode && canDelete) {
+                    actionHtml = `
+                        <button onclick="deleteUser('${escapeHtml(u.username)}')" class="text-slate-500 dark:text-slate-400 hover:text-red-700 dark:hover:text-red-400 p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition-all">
+                            <i data-lucide="user-x" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                }
+
+                let linkLabel = "Keine Verknüpfung";
+                if (u.memberId) {
+                    const matchedMember = state.members.find(m => m.id === u.memberId);
+                    if (matchedMember) {
+                        linkLabel = matchedMember.name;
+                    }
+                }
+
+                let roleWidget = "";
+                if (isOrganizerMode && u.username !== currentUserName) {
+                    roleWidget = `
+                        <select onchange="updateUserRole('${escapeHtml(u.username)}', this.value)" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Administrator</option>
+                            <option value="gast" ${u.role === 'gast' ? 'selected' : ''}>Mitglied</option>
+                        </select>
+                    `;
+                } else {
+                    roleWidget = `
+                        <span class="text-xs font-bold text-slate-800 dark:text-slate-300">
+                            ${u.role === 'admin' ? 'Administrator' : 'Mitglied'}
+                        </span>
+                    `;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-2.5 px-4 font-black text-slate-950 dark:text-white">${escapeHtml(u.username)}</td>
+                    <td class="py-2.5 px-4">
+                        ${roleWidget}
+                    </td>
+                    <td class="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">${escapeHtml(linkLabel)}</td>
+                    <td class="py-2.5 px-4 text-right">${actionHtml}</td>
+                `;
+                body.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // ================= STREAMING_CHUNK: USER CREATION & ROLE MODIFIERS =================
+        function updateUserRole(username, newRole) {
+            if (!isOrganizerMode) return;
+            const matchedUser = state.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+            if (matchedUser) {
+                matchedUser.role = newRole;
+                saveState();
+                applyUIRoles();
+                showToast(`Rolle für ${username} erfolgreich auf ${newRole === 'admin' ? 'Administrator' : 'Mitglied'} geändert`);
+            }
+        }
+
+        async function addNewUser() {
+            if (!isOrganizerMode) return;
+
+            const nameInput = document.getElementById("admin-new-username");
+            const passInput = document.getElementById("admin-new-password");
+            const roleSelect = document.getElementById("admin-new-role");
+            const memberLinkSelect = document.getElementById("admin-new-member-link");
+
+            const username = nameInput.value.trim().toLowerCase();
+            const password = passInput.value;
+            const role = roleSelect.value;
+            const memberId = memberLinkSelect.value || null;
+
+            if (!username || !password) {
+                showToast("Bitte gib einen Benutzernamen und ein Passwort ein", "error");
+                return;
+            }
+
+            if (username.length < 3 || password.length < 3) {
+                showToast("Name und Passwort müssen mindestens 3 Zeichen lang sein", "error");
+                return;
+            }
+
+            const exists = state.users.some(u => u.username.toLowerCase() === username);
+            if (exists) {
+                showToast("Dieser Benutzername existiert bereits", "error");
+                return;
+            }
+
+            const pinHash = await sha256(password);
+
+            state.users.push({
+                username: username,
+                pinHash: pinHash,
+                role: role,
+                memberId: memberId,
+                profilePic: "",
+                bio: ""
+            });
+
+            saveState();
+            nameInput.value = "";
+            passInput.value = "";
+            memberLinkSelect.value = "";
+            
+            applyUIRoles();
+            showToast(`Benutzer ${username} wurde erfolgreich erstellt`);
+        }
+
+        function deleteUser(username) {
+            if (!isOrganizerMode) return;
+
+            state.users = state.users.filter(u => u.username.toLowerCase() !== username.toLowerCase());
+            saveState();
+            renderUsersTable();
+            showToast("Benutzer gelöscht");
+        }
+
+        // ================= STREAMING_CHUNK: PERSONAL SELF ACCOUNT SETTINGS =================
+        function uploadProfilePic(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempProfilePic = e.target.result;
+                document.getElementById("settings-avatar-preview").src = tempProfilePic;
+                document.getElementById("settings-avatar-preview").classList.remove("hidden");
+                document.getElementById("settings-avatar-placeholder").classList.add("hidden");
+                showToast("Profilbild geladen. Speichere die Änderungen um es dauerhaft zu sichern");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveProfileDetails() {
+            const user = state.users.find(u => u.username.toLowerCase() === currentUserName.toLowerCase());
+            if (user) {
+                const bioVal = document.getElementById("settings-bio").value.trim();
+                user.bio = bioVal;
+                if (tempProfilePic) {
+                    user.profilePic = tempProfilePic;
+                }
+                saveState();
+                applyUIRoles();
+                showToast("Profil-Details erfolgreich aktualisiert");
+            } else {
+                showToast("Fehler beim Speichern der Profildaten", "error");
+            }
+        }
+
+        function setThemeMode(mode) {
+            state.theme = mode;
+            saveState();
+            applyTheme();
+            updateThemeButtonStyles();
+            showToast(`Design-Farbschema auf ${mode} geändert`);
+        }
+
+        function applyTheme() {
+            const theme = state.theme || 'light';
+            const isDark = theme === 'light' || (theme === 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (isDark) {
+                document.documentElement.classList.add('light');
+            } else {
+                document.documentElement.classList.remove('light');
+            }
+        }
+
+        function updateThemeButtonStyles() {
+            const activeMode = state.theme || 'light';
+            const btns = {
+                light: document.getElementById('theme-btn-light'),
+                dark: document.getElementById('theme-btn-dark'),
+                system: document.getElementById('theme-btn-system')
+            };
+
+            Object.keys(btns).forEach(mode => {
+                if (!btns[mode]) return;
+                if (mode === activeMode) {
+                    btns[mode].className = "py-3 px-4 border border-indigo-500 rounded-xl text-xs font-black bg-indigo-600 text-white shadow-md transition-all";
+                } else {
+                    btns[mode].className = "py-3 px-4 border border-slate-300 dark:border-slate-750 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all";
+                }
+            });
+        }
+
+        async function changeOwnPassword() {
+            const passInput = document.getElementById("settings-new-password");
+            const repeatInput = document.getElementById("settings-new-password-repeat");
+
+            const newPass = passInput.value;
+            const repeatPass = repeatInput.value;
+
+            if (!newPass) {
+                showToast("Bitte gib ein neues Passwort ein", "error");
+                return;
+            }
+
+            if (newPass.length < 3) {
+                showToast("Das Passwort muss mindestens 3 Zeichen lang sein", "error");
+                return;
+            }
+
+            if (newPass !== repeatPass) {
+                showToast("Die Passwörter stimmen nicht überein", "error");
+                return;
+            }
+
+            const matchedUser = state.users.find(u => u.username.toLowerCase() === currentUserName.toLowerCase());
+            if (!matchedUser) {
+                showToast("Profil-Fehler", "error");
+                return;
+            }
+
+            const newHash = await sha256(newPass);
+            matchedUser.pinHash = newHash;
+            saveState();
+
+            passInput.value = "";
+            repeatInput.value = "";
+            showToast("Dein Passwort wurde erfolgreich geändert");
+        }
+
+        // ================= STREAMING_CHUNK: DATABASE / BACKUP CONTROL =================
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            
+            const today = new Date();
+            const dateStr = today.toISOString().slice(0,10);
+            dlAnchorElem.setAttribute("download", `technik_ag_backup_${dateStr}.json`);
+            
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            document.body.removeChild(dlAnchorElem);
+            
+            showToast("Backup erfolgreich exportiert");
+        }
+
+        function importData(event) {
+            if (!isOrganizerMode) return;
+
+            const fileReader = new FileReader();
+            const file = event.target.files[0];
+            
+            if (!file) return;
+
+            fileReader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    
+                    if (parsed.members && parsed.meetings && parsed.attendance && parsed.events) {
+                        state = parsed;
+                        if (!state.holidays) state.holidays = [];
+                        if (!state.holidayExceptions) state.holidayExceptions = [];
+                        if (!state.cancelledDates) state.cancelledDates = {};
+                        if (!state.theme) state.theme = "system";
+                        
+                        saveState();
+                        renderAll();
+                        applyTheme();
+                        showToast("Backup erfolgreich importiert");
+                    } else {
+                        showToast("Ungültiges Backup-Dateiformat", "error");
+                    }
+                } catch (err) {
+                    showToast("Fehler beim Lesen der Datei", "error");
+                }
+            };
+            fileReader.readAsText(file);
+        }
+
+        function openResetConfirmModal() {
+            if (!isOrganizerMode) return;
+
+            const content = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center text-red-700 border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <h3 class="text-lg font-black">Alles löschen</h3>
+                    </div>
+                    <p class="text-sm text-slate-800 dark:text-slate-200 font-bold">Bist du sicher, dass du die komplette Datenbank zurücksetzen willst?</p>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="closeModal()" class="flex-1 py-3 text-sm font-bold text-slate-700 bg-slate-200 dark:bg-slate-800 rounded-xl transition-all">Abbrechen</button>
+                        <button onclick="submitResetDB()" class="flex-1 py-3 text-sm font-black text-white bg-red-700 hover:bg-red-800 dark:hover:bg-red-755 rounded-xl transition-all font-sans">Ja, komplett leeren</button>
+                    </div>
+                </div>
+            `;
+            openModal(content);
+        }
+
+        function submitResetDB() {
+            localStorage.removeItem("technik_ag_state_v7");
+            state = {
+                members: [],
+                meetings: [],
+                attendance: {},
+                events: [],
+                holidays: [],
+                holidayExceptions: [],
+                recurringDay: null,
+                recurringStartDate: "",
+                cancelledDates: {},
+                theme: "system",
+                users: [
+                    { username: "admin", pinHash: "240be518abb02191ddf4819e13953e55df52a10c0e25a278917812e69006093f", role: "admin", memberId: null, profilePic: "", bio: "" },
+                    { username: "gast", pinHash: "9a0a0ffef42c730438cf56d814be394237d6e5a40e90c5c3639433a01726715c", role: "gast", memberId: null, profilePic: "", bio: "" }
+                ]
+            };
+            saveState();
+            closeModal();
+            renderAll();
+            applyTheme();
+            showToast("Datenbank wurde vollständig geleert", "error");
+        }
+
+        // ================= APP INITIALIZATION =================
+        window.onload = function() {
+            loadState();
+        };
+    </script>
+</body>
+</html>
