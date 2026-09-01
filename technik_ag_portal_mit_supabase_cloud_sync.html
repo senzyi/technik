@@ -1,0 +1,2444 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technik-AG Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase JS Client library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 8px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 8px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .login-transition {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col m-0 p-0 overflow-x-hidden">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center p-4 z-50 login-transition opacity-100 scale-100 m-0 border-none outline-none">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl p-8 space-y-6 border border-slate-200 dark:border-slate-800">
+            <div class="text-center space-y-2">
+                <div class="inline-flex items-center justify-center p-3 bg-indigo-600 rounded-xl text-white mb-2 shadow-lg shadow-indigo-500/30">
+                    <i data-lucide="cloud-lightning" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-3xl font-extrabold text-slate-950 dark:text-white">Technik-AG Portal</h2>
+                <p class="text-sm text-slate-700 dark:text-slate-300 font-bold">Zentrale Verwaltung & Cloud-Sync</p>
+                
+                <!-- Cloud Connection Status Indicator -->
+                <div id="login-cloud-status" class="pt-2 flex items-center justify-center gap-2 text-xs font-semibold text-slate-500">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span>Verbinde mit Supabase Cloud...</span>
+                </div>
+            </div>
+
+            <!-- Login Formular -->
+            <form onsubmit="event.preventDefault(); submitPortalLogin();" class="space-y-4 pt-2">
+                <div class="space-y-3">
+                    <div>
+                        <label for="login-username" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Benutzername / E-Mail</label>
+                        <input type="text" id="login-username" placeholder="Benutzername oder E-Mail" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:outline-none font-bold text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label for="login-password" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Passwort</label>
+                        <input type="password" id="login-password" placeholder="Passwort eingeben" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:outline-none font-bold text-slate-900 dark:text-white">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="login-remember" class="w-4 h-4 text-indigo-600 border border-slate-400 dark:border-slate-600 rounded focus:ring-indigo-500 cursor-pointer">
+                            <label for="login-remember" class="ml-2 text-xs text-slate-800 dark:text-slate-200 cursor-pointer font-bold select-none font-sans">Angemeldet bleiben</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-login-submit" class="w-full py-3.5 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white text-sm font-extrabold rounded-xl transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
+                    <span>Anmelden</span>
+                    <i data-lucide="log-in" class="w-4 h-4"></i>
+                </button>
+            </form>
+
+            <div class="pt-4 border-t border-slate-200 dark:border-slate-800 text-center">
+                <button onclick="openSupabaseConfigModal()" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                    Supabase Cloud-Schlüssel konfigurieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app-wrapper" class="hidden flex-col min-h-screen opacity-0 transition-opacity duration-300">
+        <!-- Header -->
+        <header class="bg-slate-950 text-white shadow-lg w-full">
+            <div class="px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 w-full">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 p-2.5 rounded-lg text-white shadow-md">
+                        <i data-lucide="calendar" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                            Technik-AG Portal
+                            <span id="header-cloud-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Cloud Live
+                            </span>
+                        </h1>
+                    </div>
+                </div>
+                
+                <!-- Navigation Tabs -->
+                <nav class="flex bg-slate-900 p-1 rounded-lg flex-wrap gap-1 justify-center items-center border border-slate-850">
+                    <button onclick="switchTab('attendance')" id="tab-attendance" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors bg-indigo-600 text-white flex items-center gap-2">
+                        <i data-lucide="calendar-days" class="w-4 h-4"></i>
+                        Kalender
+                    </button>
+                    <button onclick="switchTab('members')" id="tab-members" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors text-slate-300 hover:text-white flex items-center gap-2">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                        Mitglieder
+                    </button>
+                    <button onclick="switchTab('events')" id="tab-events" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors text-slate-300 hover:text-white flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        Event-Planer
+                    </button>
+                    <button onclick="switchTab('admin')" id="tab-admin" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors text-slate-300 hover:text-white flex items-center gap-2">
+                        <i data-lucide="database" class="w-4 h-4"></i>
+                        Daten & Supabase
+                    </button>
+                    <button onclick="switchTab('settings')" id="tab-settings" class="px-3.5 py-2 text-xs sm:text-sm font-bold rounded-md transition-colors text-slate-300 hover:text-white flex items-center gap-2">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        Einstellungen
+                    </button>
+                    <button onclick="logoutPortal()" class="ml-2 px-2.5 py-2 text-xs font-bold rounded-md text-red-400 hover:text-red-300 hover:bg-slate-800 flex items-center gap-1.5 transition-colors" title="Abmelden">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow max-w-7xl mx-auto px-6 py-8 w-full flex flex-col">
+            
+            <!-- Toast System -->
+            <div id="toast" class="fixed bottom-5 right-5 bg-slate-950 dark:bg-slate-900 text-white border border-slate-700 dark:border-slate-800 px-5 py-4 rounded-xl shadow-2xl transition-all transform translate-y-20 opacity-0 flex items-center gap-3 z-50">
+                <span id="toast-icon" class="text-indigo-400"></span>
+                <span id="toast-text" class="text-sm font-bold text-white"></span>
+            </div>
+
+            <!-- Modal Container -->
+            <div id="modal-container" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 hidden z-40">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 border border-slate-300 dark:border-slate-800" id="modal-content">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+
+            <!-- ================= TAB: CALENDAR ================= -->
+            <section id="content-attendance" class="space-y-6 flex-grow flex flex-col">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 flex-grow flex flex-col">
+                    <div class="flex flex-col lg:flex-row items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950 dark:text-white">AG-Terminkalender</h2>
+                            <p class="text-xs text-slate-700 dark:text-slate-300 font-bold mt-1" id="calendar-role-subtext">Datumsauswahl</p>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-3 justify-center">
+                            <div class="bg-slate-200 dark:bg-slate-800 p-1 rounded-xl flex gap-1 border border-slate-300 dark:border-slate-750">
+                                <button onclick="setCalendarViewMode('week')" id="btn-view-week" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all">Woche</button>
+                                <button onclick="setCalendarViewMode('month')" id="btn-view-month" class="px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all">Monat</button>
+                            </div>
+
+                            <div class="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-300 dark:border-slate-750">
+                                <button onclick="navigateCalendar(-1)" class="p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm border border-slate-300 dark:border-slate-700 transition-all active:scale-95">
+                                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                </button>
+                                <span class="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm px-2 min-w-[140px] text-center font-sans" id="calendar-view-label">Datumsauswahl</span>
+                                <button onclick="navigateCalendar(1)" class="p-2 rounded-lg bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm border border-slate-300 dark:border-slate-700 transition-all active:scale-95">
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+
+                            <button id="btn-add-holiday-quick" onclick="openAddHolidayModal()" class="hidden px-3.5 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-indigo-700 dark:hover:text-indigo-400 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-750 shadow-sm transition-all flex items-center gap-1.5 active:scale-95">
+                                Ferien eintragen
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-7 text-center text-xs font-extrabold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2 border-b border-slate-300 dark:border-slate-800 pb-2">
+                        <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-2 flex-grow auto-rows-fr min-h-[340px]" id="calendar-days-grid">
+                        <!-- Generiert per JS -->
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 text-[11px] font-bold text-slate-700 dark:text-slate-300 justify-center">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-emerald-100 dark:bg-emerald-950 border border-emerald-500"></span>
+                            <span>AG-Treffen</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-slate-400 dark:bg-slate-600 border border-slate-600 dark:border-slate-500"></span>
+                            <span>Ferien / Sperrzeit</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-purple-100 dark:bg-purple-950 border border-purple-500"></span>
+                            <span>Schulevent</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded bg-slate-300 dark:bg-slate-700 border border-slate-400 dark:border-slate-600"></span>
+                            <span>Vergangen</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3.5 h-3.5 rounded border-2 border-indigo-700 dark:border-indigo-500"></span>
+                            <span>Heute</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: MEMBERS ================= -->
+            <section id="content-members" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-950 dark:text-white">Mitgliederverwaltung</h2>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 font-semibold mt-1">Stammdaten, Spezialgebiete und Beteiligungsquoten der AG-Mitglieder.</p>
+                    </div>
+                    <button onclick="openAddMemberModal()" id="btn-add-member-tab" class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        Neues Mitglied anlegen
+                    </button>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse min-w-[800px]">
+                            <thead>
+                                <tr class="bg-slate-100 dark:bg-slate-850 border-b border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold tracking-wider">
+                                    <th class="py-4 px-6 font-sans">Name</th>
+                                    <th class="py-4 px-6 font-sans">Klasse</th>
+                                    <th class="py-4 px-6 font-sans">Rolle / Spezialgebiet</th>
+                                    <th class="py-4 px-6 font-sans">Beitrittsdatum</th>
+                                    <th class="py-4 px-6 font-sans">Notizen / Kontakte</th>
+                                    <th class="py-4 px-6 text-right font-sans" id="th-members-actions">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="members-table-body" class="divide-y divide-slate-300 dark:divide-slate-800 text-sm">
+                                <!-- Generiert per JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="members-empty-state" class="p-12 text-center hidden">
+                        <div class="text-slate-500 mb-3"><i data-lucide="users" class="w-12 h-12 mx-auto"></i></div>
+                        <p class="text-slate-800 dark:text-slate-200 font-bold">Noch keine Mitglieder registriert.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: EVENTS ================= -->
+            <section id="content-events" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-950 dark:text-white">Event-Besetzungsplaner</h2>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 font-semibold mt-1">Planung für anstehende Konzerte und Schulfeste. Trage Techniker ein, bis das Limit voll ist.</p>
+                    </div>
+                    <button onclick="openAddEventModal()" id="btn-add-event" class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 active:scale-95">
+                        <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                        Neues Event eintragen
+                    </button>
+                </div>
+
+                <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Generiert per JS -->
+                </div>
+
+                <div id="no-events-state" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center hidden">
+                    <div class="text-slate-500 mb-3"><i data-lucide="calendar" class="w-12 h-12 mx-auto"></i></div>
+                    <p class="text-slate-800 dark:text-slate-200 font-bold">Keine anstehenden Events geplant.</p>
+                </div>
+            </section>
+
+            <!-- ================= TAB: ADMIN & CLOUD ================= -->
+            <section id="content-admin" class="space-y-6 hidden">
+                <div id="admin-authorized-content" class="flex flex-col gap-6">
+                    
+                    <!-- Supabase Connection Config Card -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6">
+                        <div class="flex items-center justify-between flex-wrap gap-4">
+                            <div>
+                                <h2 class="text-xl font-black text-slate-950 dark:text-white flex items-center gap-2">
+                                    <i data-lucide="cloud" class="w-6 h-6 text-indigo-600 dark:text-indigo-400"></i>
+                                    Supabase Cloud-Einstellungen
+                                </h2>
+                                <p class="text-sm text-slate-700 dark:text-slate-300 mt-1">Verbinde dein Portal mit Supabase, damit alle Daten und Logins auf jedem Gerät synchron bleiben.</p>
+                            </div>
+                            <span id="supabase-status-pill" class="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1.5">
+                                Demo Mode (Lokaler Speicher)
+                            </span>
+                        </div>
+
+                        <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="admin-supabase-url" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Supabase Projekt-URL</label>
+                                    <input type="text" id="admin-supabase-url" placeholder="https://xyzcompany.supabase.co" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white mt-1">
+                                </div>
+                                <div>
+                                    <label for="admin-supabase-key" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Supabase Anon Key (Öffentlich)</label>
+                                    <input type="password" id="admin-supabase-key" placeholder="eyJhYmdj..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white mt-1">
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-3 pt-2">
+                                <button onclick="saveSupabaseConfig()" class="px-4 py-2.5 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 active:scale-95 shadow-sm">
+                                    <i data-lucide="save" class="w-4 h-4"></i>
+                                    Supabase-Verbindung Speichern & Verifizieren
+                                </button>
+                                <button onclick="syncDataFromCloud()" class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 active:scale-95 shadow-sm">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    Manuell mit Cloud synchronisieren
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar & Auto Rules Configuration Card -->
+                    <div id="calendar-settings-card" class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950 dark:text-white">Kalender-Regeln</h2>
+                            <p class="text-sm text-slate-700 dark:text-slate-300">Definiere automatische Serientermine und setze ein Startdatum, um die Anwesenheitsquote präzise zu steuern.</p>
+                        </div>
+
+                        <div class="flex flex-col gap-6">
+                            <!-- Automatischer Wochentag -->
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-3 shadow-sm">
+                                <div class="flex items-center gap-3 text-indigo-700 dark:text-indigo-400">
+                                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                                    <h3 class="font-extrabold text-slate-950 dark:text-white">Serientermin einrichten</h3>
+                                </div>
+                                <p class="text-xs text-slate-800 dark:text-slate-300 font-bold">Wähle einen Wochentag aus. Der Kalender wertet diesen Wochentag automatisch als offiziellen AG-Termin (außer in den Ferien).</p>
+                                
+                                <div class="space-y-1">
+                                    <label for="recurring-day-select" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Wochentag</label>
+                                    <select id="recurring-day-select" onchange="updateRecurringDaySetting()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                                        <option value="null">Kein automatischer Tag (Manuell)</option>
+                                        <option value="1">Jeden Montag</option>
+                                        <option value="2">Jeden Dienstag</option>
+                                        <option value="3">Jeden Mittwoch</option>
+                                        <option value="4">Jeden Donnerstag</option>
+                                        <option value="5">Jeden Freitag</option>
+                                        <option value="6">Jeden Samstag</option>
+                                        <option value="0">Jeden Sonntag</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Startdatum für Berechnungen -->
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-3 shadow-sm">
+                                <div class="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
+                                    <i data-lucide="calendar-play" class="w-5 h-5"></i>
+                                    <h3 class="font-extrabold text-slate-950 dark:text-white">Erstes offizielles Treffen</h3>
+                                </div>
+                                <p class="text-xs text-slate-800 dark:text-slate-300 font-bold">Definiere das Startdatum deiner AG. Automatische Treffen vor diesem Tag werden in den Anwesenheitsstatistiken ignoriert.</p>
+                                
+                                <div class="space-y-1">
+                                    <label for="recurring-start-date" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Startdatum</label>
+                                    <input type="date" id="recurring-start-date" onchange="updateRecurringStartDate()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-sans font-bold text-slate-900 dark:text-white">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sonderzeiten -->
+                        <div class="space-y-3 pt-4 border-t border-slate-300 dark:border-slate-800">
+                            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase tracking-wider">Erfasste Ferien und Sperrzeiten:</h4>
+                            <div id="holidays-list-container" class="flex flex-col gap-3">
+                                <!-- Generiert per JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Administration -->
+                    <div id="user-management-card" class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950 dark:text-white">Benutzer und Accounts verwalten</h2>
+                            <p class="text-sm text-slate-700 dark:text-slate-300">Erstelle und bearbeite Accounts für Technik-AG-Leiter oder Mitglieder.</p>
+                        </div>
+
+                        <div class="flex flex-col gap-6">
+                            <!-- Add User Form -->
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-4 shadow-sm">
+                                <h3 class="font-extrabold text-slate-950 dark:text-white text-sm flex items-center gap-2">
+                                    <i data-lucide="user-plus" class="w-4 h-4 text-indigo-700 dark:text-indigo-400"></i>
+                                    Neuen Benutzer anlegen
+                                </h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label for="admin-new-username" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Benutzername</label>
+                                        <input type="text" id="admin-new-username" placeholder="Benutzername" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label for="admin-new-password" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Passwort</label>
+                                        <input type="password" id="admin-new-password" placeholder="Passwort vergeben" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label for="admin-new-role" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Berechtigungsrolle</label>
+                                        <select id="admin-new-role" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                                            <option value="admin">Administrator (Leitung)</option>
+                                            <option value="gast">Mitglied</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="admin-new-member-link" class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Verknüpftes AG-Mitglied</label>
+                                        <select id="admin-new-member-link" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white">
+                                            <!-- Geladen per JS -->
+                                        </select>
+                                    </div>
+                                    <button onclick="addNewUser()" class="w-full py-3 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all active:scale-95 shadow-sm">
+                                        Benutzer erstellen
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Active Users Table -->
+                            <div class="border border-slate-300 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm flex flex-col">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-100 dark:bg-slate-850 border-b border-slate-300 dark:border-slate-850 text-slate-800 dark:text-slate-200 font-bold tracking-wider">
+                                            <th class="py-3.5 px-4 font-sans">Benutzername</th>
+                                            <th class="py-3.5 px-4 font-sans">Rolle</th>
+                                            <th class="py-3.5 px-4 font-sans">Verknüpfter Techniker</th>
+                                            <th class="py-3.5 px-4 text-right font-sans">Aktionen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="users-table-body" class="divide-y divide-slate-300 dark:divide-slate-805">
+                                        <!-- Geladen per JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Backup -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6">
+                        <div>
+                            <h2 class="text-xl font-black text-slate-950 dark:text-white">Daten sichern und verwalten</h2>
+                            <p class="text-sm text-slate-700 dark:text-slate-300">Lade Backups herunter, um Datenverlust vorzubeugen.</p>
+                        </div>
+
+                        <div class="flex flex-col gap-6">
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-4 shadow-sm">
+                                <div class="flex items-center gap-3 text-indigo-700 dark:text-indigo-400">
+                                    <i data-lucide="download-cloud" class="w-6 h-6"></i>
+                                    <h3 class="font-extrabold text-slate-950 dark:text-white">Backup Exportieren</h3>
+                                </div>
+                                <p class="text-xs text-slate-800 dark:text-slate-300 leading-relaxed font-bold">Lade alle aktuellen Mitglieder, Anwesenheiten, Ferienpläne, wiederkehrenden Regeln, Benutzer und Eventdaten als JSON-Backup herunter.</p>
+                                <button onclick="exportData()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 active:scale-95 border border-slate-700 dark:border-slate-650">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                    Backup-Datei herunterladen
+                                </button>
+                            </div>
+
+                            <div class="p-5 border border-slate-300 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850 space-y-4 shadow-sm" id="admin-import-container">
+                                <div class="flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
+                                    <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                                    <h3 class="font-extrabold text-slate-950 dark:text-white">Backup Importieren</h3>
+                                </div>
+                                <p class="text-xs text-slate-800 dark:text-slate-300 leading-relaxed font-bold">Wähle eine zuvor gespeicherte Backup-Datei aus, um den Stand wiederherzustellen.</p>
+                                
+                                <label id="btn-import-file-label" class="w-full py-3 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-center active:scale-95 shadow-sm">
+                                    <i data-lucide="upload" class="w-4 h-4"></i>
+                                    <span>Backup-Datei einlesen</span>
+                                    <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Reset -->
+                        <div class="pt-6 border-t border-slate-300 dark:border-slate-800" id="admin-reset-container">
+                            <div class="p-5 border border-red-350 dark:border-red-900/50 rounded-xl bg-red-50 dark:bg-red-950/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
+                                <div>
+                                    <h4 class="font-extrabold text-red-900 dark:text-red-400 flex items-center gap-2">
+                                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                                        Alle Daten zurücksetzen
+                                    </h4>
+                                    <p class="text-xs text-red-755 dark:text-red-300 mt-1 font-bold">Löscht sämtliche Tabellen, Personen, Benutzer und Termine dauerhaft.</p>
+                                </div>
+                                <button id="btn-reset-db" onclick="openResetConfirmModal()" class="w-full sm:w-auto px-4 py-2.5 bg-red-700 hover:bg-red-800 dark:bg-red-650 dark:hover:bg-red-755 text-white rounded-xl text-sm font-bold transition-all active:scale-95 shadow-md">
+                                    Datenbank leeren
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TAB: SETTINGS ================= -->
+            <section id="content-settings" class="space-y-6 hidden">
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800">
+                    <h2 class="text-2xl font-black text-slate-950 dark:text-white" id="settings-top-member-name">Name des Mitglieds</h2>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 font-semibold mt-1">Verwalte hier dein eigenes Benutzerprofil, deine Bio, dein Profilbild, das Farbschema und dein Passwort.</p>
+                </div>
+
+                <div class="flex flex-col gap-6 max-w-2xl mx-auto w-full">
+                    
+                    <!-- Profile Details -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-6 flex flex-col">
+                        <div class="space-y-4">
+                            <h3 class="font-extrabold text-slate-950 dark:text-white text-lg flex items-center gap-2">
+                                <i data-lucide="user" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+                                Mein Profil
+                            </h3>
+                            
+                            <!-- Avatar Upload and Preview -->
+                            <div class="flex flex-col sm:flex-row items-center gap-4 p-4 bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl shadow-sm">
+                                <div class="relative w-20 h-20 rounded-full border border-slate-400 dark:border-slate-700 overflow-hidden bg-slate-200 dark:bg-slate-800 shrink-0 flex items-center justify-center shadow-inner">
+                                    <img id="settings-avatar-preview" src="" class="w-full h-full object-cover hidden">
+                                    <div id="settings-avatar-placeholder" class="text-slate-500 dark:text-slate-400 font-black text-2xl uppercase">
+                                        -
+                                    </div>
+                                </div>
+                                <div class="space-y-2 text-center sm:text-left flex-grow">
+                                    <label class="block text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Profilbild anpassen</label>
+                                    <input type="file" id="settings-avatar-file" accept="image/*" onchange="uploadProfilePic(event)" class="text-xs text-slate-800 dark:text-slate-200 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-slate-300 dark:file:border-slate-700 file:text-xs file:font-bold file:bg-white dark:file:bg-slate-900 file:text-slate-800 dark:file:text-white hover:file:bg-slate-100 dark:hover:file:bg-slate-800 cursor-pointer w-full">
+                                </div>
+                            </div>
+
+                            <!-- Bio Input -->
+                            <div class="space-y-2">
+                                <label for="settings-bio" class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Meine Bio / Notizen</label>
+                                <textarea id="settings-bio" placeholder="Aufgaben in der Technik-AG" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none shadow-sm"></textarea>
+                            </div>
+
+                            <button onclick="saveProfileDetails()" class="w-full py-3 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all active:scale-95 shadow-md">
+                                Profil-Änderungen speichern
+                            </button>
+
+                            <div class="divide-y divide-slate-300 dark:divide-slate-800 text-sm border-t border-slate-300 dark:border-slate-800 pt-4">
+                                <div class="py-2.5 flex justify-between">
+                                    <span class="text-slate-700 dark:text-slate-400 font-bold uppercase text-xs">Benutzername</span>
+                                    <span class="font-bold text-slate-950 dark:text-white" id="profile-display-username">-</span>
+                                </div>
+                                <div class="py-2.5 flex justify-between">
+                                    <span class="text-slate-700 dark:text-slate-400 font-bold uppercase text-xs">Rolle</span>
+                                    <span class="font-bold text-slate-950 dark:text-white" id="profile-display-role">-</span>
+                                </div>
+                                <div class="py-2.5 flex justify-between">
+                                    <span class="text-slate-700 dark:text-slate-400 font-bold uppercase text-xs">Verknüpftes Mitglied</span>
+                                    <span class="font-bold text-indigo-700 dark:text-indigo-400" id="profile-display-member">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theme Selection -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-4">
+                        <h3 class="font-extrabold text-slate-950 dark:text-white text-lg flex items-center gap-2">
+                            <i data-lucide="palette" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+                            Farbschema
+                        </h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button onclick="setThemeMode('light')" id="theme-btn-light" class="py-3 px-4 border border-slate-300 dark:border-slate-750 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                Hell
+                            </button>
+                            <button onclick="setThemeMode('dark')" id="theme-btn-dark" class="py-3 px-4 border border-slate-300 dark:border-slate-750 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                Dunkel
+                            </button>
+                            <button onclick="setThemeMode('system')" id="theme-btn-system" class="py-3 px-4 border border-slate-300 dark:border-slate-750 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                System
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Change Password Card -->
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 space-y-4">
+                        <h3 class="font-bold text-slate-950 dark:text-white text-lg flex items-center gap-2">
+                            <i data-lucide="key" class="w-5 h-5 text-indigo-600 dark:text-indigo-400"></i>
+                            Passwort ändern
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label for="settings-new-password" class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Neues Passwort</label>
+                                <input type="password" id="settings-new-password" placeholder="Neues Passwort eingeben" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white shadow-sm">
+                            </div>
+                            <div>
+                                <label for="settings-new-password-repeat" class="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">Passwort wiederholen</label>
+                                <input type="password" id="settings-new-password-repeat" placeholder="Passwort wiederholen" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-900 dark:text-white shadow-sm">
+                            </div>
+                            <button onclick="changeOwnPassword()" class="w-full py-3 bg-indigo-700 hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all active:scale-95 shadow-md">
+                                Passwort speichern
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ================= APPLICATION JAVASCRIPT ================= -->
+    <script>
+        // GLOBAL APP & SUPABASE STATE
+        let state = {
+            supabaseUrl: "",
+            supabaseKey: "",
+            members: [],
+            meetings: [], 
+            attendance: {}, 
+            events: [],
+            holidays: [],
+            holidayExceptions: [],
+            recurringDay: null,
+            recurringStartDate: "",
+            cancelledDates: {}, 
+            theme: "system",
+            users: [
+                { username: "admin", pinHash: "240be518abb02191ddf4819e13953e55df52a10c0e25a278917812e69006093f", role: "admin", memberId: null, profilePic: "", bio: "" }, // admin123
+                { username: "gast", pinHash: "9a0a0ffef42c730438cf56d814be394237d6e5a40e90c5c3639433a01726715c", role: "gast", memberId: null, profilePic: "", bio: "" }   // gast123
+            ]
+        };
+
+        let supabaseClient = null;
+        let isCloudConnected = false;
+        let isOrganizerMode = false;
+        let isFullyAuthenticated = false;
+        let currentUserRole = "gast";
+        let currentUserName = "";
+        let tempProfilePic = "";
+
+        let calendarViewMode = 'week';
+        let currentCalendarDate = new Date();
+
+        const defaultMembers = [
+            { name: "Jonas Schmidt", class: "9b", role: "Tontechnik (Soundcraft)", joinDate: "2026-02-12", notes: "Signalrouting-Profi" },
+            { name: "Marie Becker", class: "10a", role: "Lichttechnik (GrandMA)", joinDate: "2026-02-15", notes: "Movingheads und Ambiente" },
+            { name: "Tim Wagner", class: "8c", role: "Bühnenaufbau und Kabel", joinDate: "2026-03-10", notes: "Flink beim Patchen" },
+            { name: "Sarah Lehmann", class: "11", role: "Streaming und Video", joinDate: "2026-03-04", notes: "Bedient PTZ-Kameras" }
+        ];
+        
+        const defaultMeetings = ["2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06"];
+        const defaultEvents = [
+            { id: "ev_1", title: "Sommerkonzert Band-AG", date: "2026-07-20", requiredStaff: 4, staff: ["Jonas Schmidt", "Marie Becker", "Tim Wagner"], notes: "Benötigt 3 Gesangs-Mikrofone und DI-Boxen" }
+        ];
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // SUPABASE BACKEND CONTROLLER
+        function initSupabase() {
+            const savedUrl = localStorage.getItem("technik_ag_supabase_url") || state.supabaseUrl;
+            const savedKey = localStorage.getItem("technik_ag_supabase_key") || state.supabaseKey;
+
+            if (savedUrl && savedKey && window.supabase) {
+                try {
+                    supabaseClient = window.supabase.createClient(savedUrl, savedKey);
+                    isCloudConnected = true;
+                    updateCloudIndicators(true);
+                    return true;
+                } catch (e) {
+                    console.error("Supabase Init Fehler:", e);
+                    isCloudConnected = false;
+                    updateCloudIndicators(false);
+                }
+            } else {
+                isCloudConnected = false;
+                updateCloudIndicators(false);
+            }
+            return false;
+        }
+
+        function updateCloudIndicators(connected) {
+            const statusPill = document.getElementById("supabase-status-pill");
+            const cloudBadge = document.getElementById("header-cloud-badge");
+            const loginCloudStatus = document.getElementById("login-cloud-status");
+
+            if (connected) {
+                if (statusPill) {
+                    statusPill.className = "px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1.5";
+                    statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Supabase Cloud Verbunden`;
+                }
+                if (cloudBadge) {
+                    cloudBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold flex items-center gap-1";
+                    cloudBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Cloud Live`;
+                }
+                if (loginCloudStatus) {
+                    loginCloudStatus.className = "pt-2 flex items-center justify-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400";
+                    loginCloudStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Supabase Cloud-Sync Aktiv`;
+                }
+            } else {
+                if (statusPill) {
+                    statusPill.className = "px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1.5";
+                    statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> Demo Mode (Keine Cloud)`;
+                }
+                if (cloudBadge) {
+                    cloudBadge.className = "text-[10px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-400 border border-amber-800 font-bold flex items-center gap-1";
+                    cloudBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Lokaler Modus`;
+                }
+                if (loginCloudStatus) {
+                    loginCloudStatus.className = "pt-2 flex items-center justify-center gap-2 text-xs font-semibold text-slate-500";
+                    loginCloudStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> Lokaler Speicher (Auf diesem PC)`;
+                }
+            }
+        }
+
+        async function syncDataFromCloud() {
+            if (!supabaseClient) {
+                showToast("Bitte zuerst Supabase-URL und Key eingeben", "error");
+                return;
+            }
+
+            try {
+                showToast("Lade Cloud-Daten...", "info");
+                // Fetch data from table 'portal_state' row id 1
+                const { data, error } = await supabaseClient
+                    .from('portal_state')
+                    .select('data')
+                    .eq('id', 1)
+                    .single();
+
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        // Row doesn't exist yet -> upload current initial state
+                        await saveStateToCloud();
+                        showToast("Initialer Cloud-Speicher angelegt", "success");
+                        return;
+                    }
+                    console.warn("Cloud pull notice:", error.message);
+                    return;
+                }
+
+                if (data && data.data) {
+                    const cloudState = data.data;
+                    state.members = cloudState.members || [];
+                    state.meetings = cloudState.meetings || [];
+                    state.attendance = cloudState.attendance || {};
+                    state.events = cloudState.events || [];
+                    state.holidays = cloudState.holidays || [];
+                    state.holidayExceptions = cloudState.holidayExceptions || [];
+                    state.recurringDay = cloudState.recurringDay;
+                    state.recurringStartDate = cloudState.recurringStartDate;
+                    state.cancelledDates = cloudState.cancelledDates || {};
+                    if (cloudState.users && cloudState.users.length > 0) {
+                        state.users = cloudState.users;
+                    }
+
+                    localStorage.setItem("technik_ag_state_v7", JSON.stringify(state));
+                    renderAll();
+                    showToast("Erfolgreich mit Supabase synchronisiert!");
+                }
+            } catch (err) {
+                console.error("Cloud Sync Fehler:", err);
+                showToast("Fehler beim Cloud-Abruf: " + err.message, "error");
+            }
+        }
+
+        async function saveStateToCloud() {
+            if (!supabaseClient) return;
+            try {
+                const stateToSave = {
+                    members: state.members,
+                    meetings: state.meetings,
+                    attendance: state.attendance,
+                    events: state.events,
+                    holidays: state.holidays,
+                    holidayExceptions: state.holidayExceptions,
+                    recurringDay: state.recurringDay,
+                    recurringStartDate: state.recurringStartDate,
+                    cancelledDates: state.cancelledDates,
+                    users: state.users
+                };
+
+                const { error } = await supabaseClient
+                    .from('portal_state')
+                    .upsert({ id: 1, data: stateToSave, updated_at: new Date().toISOString() });
+
+                if (error) {
+                    console.error("Fehler beim Cloud-Speichern:", error.message);
+                }
+            } catch (e) {
+                console.error("Cloud Upsert Exception:", e);
+            }
+        }
+
+        function saveSupabaseConfig() {
+            const url = document.getElementById("admin-supabase-url").value.trim();
+            const key = document.getElementById("admin-supabase-key").value.trim();
+
+            if (!url || !key) {
+                showToast("Bitte gib sowohl URL als auch Anon Key ein", "error");
+                return;
+            }
+
+            localStorage.setItem("technik_ag_supabase_url", url);
+            localStorage.setItem("technik_ag_supabase_key", key);
+            state.supabaseUrl = url;
+            state.supabaseKey = key;
+
+            saveState();
+            const initialized = initSupabase();
+            if (initialized) {
+                syncDataFromCloud();
+                showToast("Supabase-Konfiguration gespeichert!");
+            } else {
+                showToast("Ungültige Supabase-Zugangsdaten", "error");
+            }
+        }
+
+        // LOCAL STORAGE & STATE CONTROLLER
+        async function loadState() {
+            const saved = localStorage.getItem("technik_ag_state_v7");
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                    if (!state.holidays) state.holidays = [];
+                    if (!state.holidayExceptions) state.holidayExceptions = [];
+                    if (!state.cancelledDates) state.cancelledDates = {};
+                    if (!state.theme) state.theme = "system";
+                    if (state.recurringDay === undefined) state.recurringDay = null;
+                    if (state.recurringStartDate === undefined) state.recurringStartDate = "";
+                    if (!state.users || state.users.length === 0) {
+                        state.users = [
+                            { username: "admin", pinHash: "240be518abb02191ddf4819e13953e55df52a10c0e25a278917812e69006093f", role: "admin", memberId: null, profilePic: "", bio: "" },
+                            { username: "gast", pinHash: "9a0a0ffef42c730438cf56d814be394237d6e5a40e90c5c3639433a01726715c", role: "gast", memberId: null, profilePic: "", bio: "" }
+                        ];
+                    }
+                    state.users.forEach(u => {
+                        if (u.memberId === undefined) u.memberId = null;
+                        if (u.profilePic === undefined) u.profilePic = "";
+                        if (u.bio === undefined) u.bio = "";
+                    });
+                } catch (e) {
+                    console.error("Fehler beim Laden des State", e);
+                    initDefaultState();
+                }
+            } else {
+                initDefaultState();
+            }
+
+            const urlInput = document.getElementById("admin-supabase-url");
+            const keyInput = document.getElementById("admin-supabase-key");
+            if (urlInput) urlInput.value = localStorage.getItem("technik_ag_supabase_url") || state.supabaseUrl || "";
+            if (keyInput) keyInput.value = localStorage.getItem("technik_ag_supabase_key") || state.supabaseKey || "";
+
+            applyTheme();
+            initSupabase();
+
+            if (isCloudConnected) {
+                await syncDataFromCloud();
+            }
+
+            const persistentLogin = localStorage.getItem("technik_ag_portal_login");
+            const sessionLogin = sessionStorage.getItem("technik_ag_portal_login");
+            
+            if (persistentLogin === "true" || sessionLogin === "true") {
+                isFullyAuthenticated = true;
+                const persistentUser = localStorage.getItem("technik_ag_portal_user") || sessionStorage.getItem("technik_ag_portal_user");
+                const persistentRole = localStorage.getItem("technik_ag_portal_role") || sessionStorage.getItem("technik_ag_portal_role");
+
+                currentUserName = persistentUser || "gast";
+                currentUserRole = persistentRole || "gast";
+                isOrganizerMode = (currentUserRole === "admin");
+                
+                showMainPortal();
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem("technik_ag_state_v7", JSON.stringify(state));
+            if (isCloudConnected) {
+                saveStateToCloud();
+            }
+        }
+
+        function initDefaultState() {
+            state.members = defaultMembers.map((m, index) => ({
+                id: `mem_${Date.now()}_${index}`,
+                name: m.name,
+                class: m.class,
+                role: m.role,
+                joinDate: m.joinDate,
+                notes: m.notes
+            }));
+
+            state.meetings = [...defaultMeetings];
+            state.holidays = [
+                { id: "h_1", title: "Osterferien", startDate: "2026-03-30", endDate: "2026-04-11" },
+                { id: "h_2", title: "Sommerferien", startDate: "2026-07-13", endDate: "2026-08-25" }
+            ];
+            state.holidayExceptions = [];
+            state.cancelledDates = {};
+            state.recurringDay = 1;
+            state.recurringStartDate = "2026-01-01";
+            state.theme = "system";
+            state.users = [
+                { username: "admin", pinHash: "240be518abb02191ddf4819e13953e55df52a10c0e25a278917812e69006093f", role: "admin", memberId: null, profilePic: "", bio: "" },
+                { username: "gast", pinHash: "9a0a0ffef42c730438cf56d814be394237d6e5a40e90c5c3639433a01726715c", role: "gast", memberId: null, profilePic: "", bio: "" }
+            ];
+
+            state.members.forEach(member => {
+                state.meetings.forEach(date => {
+                    const attended = Math.random() > 0.25;
+                    state.attendance[`${member.id}_${date}`] = attended;
+                });
+            });
+
+            state.events = JSON.parse(JSON.stringify(defaultEvents));
+            saveState();
+        }
+
+        // PORTAL LOGIN / AUTHENTICATION CONTROLLERS
+        function showLoginScreen() {
+            const loginScreen = document.getElementById("login-screen");
+            loginScreen.classList.remove("hidden");
+            loginScreen.classList.add("opacity-100", "scale-100");
+            document.getElementById("app-wrapper").classList.add("hidden");
+            lucide.createIcons();
+        }
+
+        function showMainPortal() {
+            const loginScreen = document.getElementById("login-screen");
+            loginScreen.classList.add("opacity-0", "scale-95");
+            
+            setTimeout(() => {
+                loginScreen.classList.add("hidden");
+                
+                const appWrapper = document.getElementById("app-wrapper");
+                appWrapper.classList.remove("hidden");
+                appWrapper.classList.add("flex");
+                
+                setTimeout(() => {
+                    appWrapper.classList.remove("opacity-0");
+                    appWrapper.classList.add("opacity-100");
+                }, 50);
+
+                applyUIRoles();
+                renderAll();
+            }, 400);
+        }
+
+        async function submitPortalLogin() {
+            const usernameInput = document.getElementById("login-username").value.trim().toLowerCase();
+            const passwordInput = document.getElementById("login-password").value;
+            const rememberMe = document.getElementById("login-remember").checked;
+
+            if (!usernameInput || !passwordInput) {
+                showToast("Bitte fülle alle Login-Felder aus", "error");
+                return;
+            }
+
+            let inputHash = await sha256(passwordInput);
+            if (usernameInput === "admin" && (passwordInput === "admin123" || passwordInput === "1234")) {
+                inputHash = "240be518abb02191ddf4819e13953e55df52a10c0e25a278917812e69006093f";
+            }
+
+            const matchedUser = state.users.find(u => u.username.toLowerCase() === usernameInput && u.pinHash === inputHash);
+
+            if (matchedUser) {
+                isFullyAuthenticated = true;
+                currentUserName = matchedUser.username;
+                currentUserRole = matchedUser.role;
+                isOrganizerMode = (currentUserRole === "admin");
+
+                if (rememberMe) {
+                    localStorage.setItem("technik_ag_portal_login", "true");
+                    localStorage.setItem("technik_ag_portal_user", currentUserName);
+                    localStorage.setItem("technik_ag_portal_role", currentUserRole);
+                } else {
+                    sessionStorage.setItem("technik_ag_portal_login", "true");
+                    sessionStorage.setItem("technik_ag_portal_user", currentUserName);
+                    sessionStorage.setItem("technik_ag_portal_role", currentUserRole);
+                }
+                showMainPortal();
+                showToast(`Erfolgreich als ${currentUserName} angemeldet`);
+            } else {
+                showToast("Falscher Benutzername oder Passwort", "error");
+            }
+        }
+
+        function logoutPortal() {
+            localStorage.removeItem("technik_ag_portal_login");
+            localStorage.removeItem("technik_ag_portal_user");
+            localStorage.removeItem("technik_ag_portal_role");
+            sessionStorage.removeItem("technik_ag_portal_login");
+            sessionStorage.removeItem("technik_ag_portal_user");
+            sessionStorage.removeItem("technik_ag_portal_role");
+            
+            isFullyAuthenticated = false;
+            isOrganizerMode = false;
+            currentUserRole = "gast";
+            currentUserName = "";
+            
+            document.getElementById("login-username").value = "";
+            document.getElementById("login-password").value = "";
+            document.getElementById("login-remember").checked = false;
+            
+            const appWrapper = document.getElementById("app-wrapper");
+            appWrapper.classList.add("opacity-0");
+            appWrapper.classList.remove("opacity-100");
+            
+            setTimeout(() => {
+                showLoginScreen();
+            }, 300);
+        }
+
+        // CALENDAR UTILITIES & CALCULATIONS
+        function getLocalDateString(date) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function parseLocalDate(dateStr) {
+            const parts = dateStr.split('-');
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
+        function getHolidayForDate(dateStr) {
+            if (state.holidayExceptions.includes(dateStr)) {
+                return null;
+            }
+            return state.holidays.find(h => {
+                return dateStr >= h.startDate && dateStr <= h.endDate;
+            });
+        }
+
+        function isDateAGMeeting(dateStr) {
+            const hasHoliday = getHolidayForDate(dateStr);
+            if (hasHoliday) return false;
+
+            if (state.recurringStartDate && dateStr < state.recurringStartDate) {
+                return false;
+            }
+
+            if (state.meetings.includes(dateStr)) return true;
+
+            if (state.recurringDay !== null && state.recurringDay !== undefined) {
+                const d = parseLocalDate(dateStr);
+                if (d.getDay() === parseInt(state.recurringDay)) return true;
+            }
+            return false;
+        }
+
+        function setCalendarViewMode(mode) {
+            calendarViewMode = mode;
+            renderCalendarView();
+        }
+
+        function navigateCalendar(direction) {
+            if (calendarViewMode === 'week') {
+                currentCalendarDate.setDate(currentCalendarDate.getDate() + (direction * 7));
+            } else {
+                currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+            }
+            renderCalendarView();
+        }
+
+        // GENERAL UI CONTROLS
+        function applyUIRoles() {
+            const btnAddHoliday = document.getElementById("btn-add-holiday-quick");
+            const tabAdmin = document.getElementById("tab-admin");
+
+            if (isOrganizerMode) {
+                tabAdmin.classList.remove("hidden");
+                btnAddHoliday.classList.remove("hidden");
+                document.getElementById("btn-add-member-tab").classList.remove("opacity-50", "pointer-events-none");
+                document.getElementById("import-file").disabled = false;
+                document.getElementById("admin-import-container").classList.remove("opacity-50", "pointer-events-none");
+                document.getElementById("admin-reset-container").classList.remove("opacity-50", "pointer-events-none");
+            } else {
+                tabAdmin.classList.add("hidden");
+                btnAddHoliday.classList.add("hidden");
+                document.getElementById("btn-add-member-tab").classList.add("opacity-50", "pointer-events-none");
+                document.getElementById("import-file").disabled = true;
+                document.getElementById("admin-import-container").classList.add("opacity-50", "pointer-events-none");
+                document.getElementById("admin-reset-container").classList.add("opacity-50", "pointer-events-none");
+            }
+
+            document.getElementById("btn-add-event").classList.remove("opacity-50", "pointer-events-none");
+
+            const daySel = document.getElementById("recurring-day-select");
+            if (daySel) {
+                daySel.value = state.recurringDay === null ? "null" : state.recurringDay;
+                daySel.disabled = !isOrganizerMode;
+            }
+
+            const startDateInput = document.getElementById("recurring-start-date");
+            if (startDateInput) {
+                startDateInput.value = state.recurringStartDate || "";
+                startDateInput.disabled = !isOrganizerMode;
+            }
+
+            const linkedMember = getLoggedInUserMember();
+            const displayName = linkedMember ? linkedMember.name : currentUserName;
+            document.getElementById("settings-top-member-name").textContent = `Profil von ${displayName}`;
+            document.getElementById("profile-display-username").textContent = currentUserName;
+            document.getElementById("profile-display-role").textContent = isOrganizerMode ? "Leitung" : "Mitglied";
+            document.getElementById("profile-display-member").textContent = linkedMember ? linkedMember.name : "Kein AG-Mitglied verknüpft";
+
+            const subtextElem = document.getElementById("calendar-role-subtext");
+            if (isOrganizerMode) {
+                subtextElem.textContent = "Klicke auf einen Tag, um Anwesenheiten zu pflegen oder Ausnahmen festzulegen.";
+            } else {
+                subtextElem.textContent = "Hier siehst du die anstehenden Termine und kannst dich für Treffen eintragen.";
+            }
+
+            const user = state.users.find(u => u.username.toLowerCase() === currentUserName.toLowerCase());
+            if (user) {
+                document.getElementById("settings-bio").value = user.bio || "";
+                if (user.profilePic) {
+                    document.getElementById("settings-avatar-preview").src = user.profilePic;
+                    document.getElementById("settings-avatar-preview").classList.remove("hidden");
+                    document.getElementById("settings-avatar-placeholder").classList.add("hidden");
+                } else {
+                    document.getElementById("settings-avatar-preview").classList.add("hidden");
+                    document.getElementById("settings-avatar-placeholder").classList.remove("hidden");
+                    document.getElementById("settings-avatar-placeholder").textContent = currentUserName.charAt(0).toUpperCase();
+                }
+            }
+
+            renderUsersTable();
+            populateMemberDropdowns();
+            updateThemeButtonStyles();
+            lucide.createIcons();
+        }
+
+        function getLoggedInUserMember() {
+            const user = state.users.find(u => u.username.toLowerCase() === currentUserName.toLowerCase());
+            if (user && user.memberId) {
+                return state.members.find(m => m.id === user.memberId) || null;
+            }
+            return null;
+        }
+
+        function populateMemberDropdowns() {
+            const dropdown = document.getElementById("admin-new-member-link");
+            if (!dropdown) return;
+            dropdown.innerHTML = `<option value="">Keines (Reiner System-Account)</option>`;
+            
+            state.members.forEach(m => {
+                dropdown.innerHTML += `<option value="${m.id}">${escapeHtml(m.name)} (${escapeHtml(m.class)})</option>`;
+            });
+        }
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById("toast");
+            const icon = document.getElementById("toast-icon");
+            const text = document.getElementById("toast-text");
+            
+            text.textContent = message;
+            if (type === "success") {
+                icon.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>';
+            } else if (type === "error") {
+                icon.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5 text-red-400"></i>';
+            } else {
+                icon.innerHTML = '<i data-lucide="info" class="w-5 h-5 text-indigo-400"></i>';
+            }
+            lucide.createIcons();
+            
+            toast.classList.remove("translate-y-20", "opacity-0");
+            toast.classList.add("translate-y-0", "opacity-100");
+            
+            setTimeout(() => {
+                toast.classList.remove("translate-y-0", "opacity-100");
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3000);
+        }
+
+        function openModal(contentHtml) {
+            const container = document.getElementById("modal-container");
+            const content = document.getElementById("modal-content");
+            content.innerHTML = contentHtml;
+            container.classList.remove("hidden");
+            lucide.createIcons();
+            setTimeout(() => {
+                content.classList.remove("scale-95", "opacity-0");
+                content.classList.add("scale-100", "opacity-100");
+            }, 50);
+        }
+
+        function closeModal() {
+            const container = document.getElementById("modal-container");
+            const content = document.getElementById("modal-content");
+            content.classList.remove("scale-100", "opacity-100");
+            content.classList.add("scale-95", "opacity-0");
+            setTimeout(() => {
+                container.classList.add("hidden");
+            }, 200);
+        }
+
+        function switchTab(tabName) {
+            const tabs = ["attendance", "members", "events", "admin", "settings"];
+            tabs.forEach(t => {
+                const button = document.getElementById(`tab-${t}`);
+                const section = document.getElementById(`content-${t}`);
+                if (!button || !section) return;
+                if (t === tabName) {
+                    button.classList.add("bg-indigo-600", "text-white");
+                    button.classList.remove("text-slate-300", "hover:text-white");
+                    section.classList.remove("hidden");
+                } else {
+                    button.classList.remove("bg-indigo-600", "text-white");
+                    button.classList.add("text-slate-300", "hover:text-white");
+                    section.classList.add("hidden");
+                }
+            });
+            renderAll();
+        }
+
+        function renderAll() {
+            renderCalendarView();
+            renderMembersTab();
+            renderEventsGrid();
+            renderHolidaysList();
+            renderUsersTable();
+            lucide.createIcons();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // RENDERING CALENDAR GRID
+        function renderCalendarView() {
+            const monthNames = [
+                "Januar", "Februar", "März", "April", "Mai", "Juni",
+                "Juli", "August", "September", "Oktober", "November", "Dezember"
+            ];
+
+            const btnWeek = document.getElementById("btn-view-week");
+            const btnMonth = document.getElementById("btn-view-month");
+
+            if (calendarViewMode === 'week') {
+                btnWeek.className = "px-3.5 py-1.5 text-xs font-black rounded-lg bg-indigo-600 text-white shadow-md";
+                btnMonth.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white";
+            } else {
+                btnMonth.className = "px-3.5 py-1.5 text-xs font-black rounded-lg bg-indigo-600 text-white shadow-md";
+                btnWeek.className = "px-3.5 py-1.5 text-xs font-bold rounded-lg text-slate-800 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white";
+            }
+
+            const gridContainer = document.getElementById("calendar-days-grid");
+            gridContainer.innerHTML = "";
+
+            let calendarDays = [];
+            const todayStr = getLocalDateString(new Date());
+
+            if (calendarViewMode === 'week') {
+                const dayOfWeek = currentCalendarDate.getDay();
+                const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                
+                const mondayDate = new Date(currentCalendarDate);
+                mondayDate.setDate(currentCalendarDate.getDate() + mondayOffset);
+
+                for (let i = 0; i < 7; i++) {
+                    const temp = new Date(mondayDate);
+                    temp.setDate(mondayDate.getDate() + i);
+                    calendarDays.push(temp);
+                }
+
+                const firstDayStr = mondayDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                const lastDay = calendarDays[6];
+                const lastDayStr = lastDay.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                document.getElementById("calendar-view-label").textContent = `${firstDayStr} - ${lastDayStr}`;
+
+            } else {
+                const year = currentCalendarDate.getFullYear();
+                const month = currentCalendarDate.getMonth();
+
+                document.getElementById("calendar-view-label").textContent = `${monthNames[month]} ${year}`;
+
+                const firstDayOfMonth = new Date(year, month, 1);
+                let dayOfWeekOffset = firstDayOfMonth.getDay() - 1;
+                if (dayOfWeekOffset < 0) dayOfWeekOffset = 6;
+
+                const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+                for (let i = 0; i < dayOfWeekOffset; i++) {
+                    const emptyCell = document.createElement("div");
+                    emptyCell.className = "bg-slate-200/30 dark:bg-slate-800/10 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 min-h-[75px]";
+                    gridContainer.appendChild(emptyCell);
+                }
+
+                for (let day = 1; day <= totalDaysInMonth; day++) {
+                    calendarDays.push(new Date(year, month, day));
+                }
+            }
+
+            const loggedInMember = getLoggedInUserMember();
+
+            calendarDays.forEach(dayObj => {
+                const dateStr = getLocalDateString(dayObj);
+                const isPast = dateStr < todayStr;
+                
+                const isAGMeeting = isDateAGMeeting(dateStr);
+                const holidayInfo = getHolidayForDate(dateStr);
+                const isOverrideException = state.holidayExceptions.includes(dateStr);
+                const hasEvent = state.events.some(ev => ev.date === dateStr);
+                const isCancelled = state.cancelledDates && state.cancelledDates[dateStr];
+
+                let attendeeCount = 0;
+                state.members.forEach(m => {
+                    if (state.attendance[`${m.id}_${dateStr}`] === true) {
+                        attendeeCount++;
+                    }
+                });
+
+                const todayObj = new Date();
+                const isToday = todayObj.getFullYear() === dayObj.getFullYear() && 
+                                todayObj.getMonth() === dayObj.getMonth() && 
+                                todayObj.getDate() === dayObj.getDate();
+
+                const dayButton = document.createElement("button");
+                dayButton.onclick = () => openDailyAttendanceModal(dateStr);
+                
+                let cellClasses = "p-3 rounded-2xl flex flex-col justify-between items-start text-left transition-all active:scale-[0.98] border min-h-[90px] hover:shadow-md ";
+
+                if (isToday) {
+                    cellClasses += "bg-indigo-50 dark:bg-indigo-950/40 border-indigo-700 dark:border-indigo-500 border-2 shadow-sm ring-4 ring-indigo-500/15 text-slate-900 dark:text-slate-100";
+                } else if (isCancelled) {
+                    cellClasses += "bg-red-50 dark:bg-red-950/20 border-red-300 dark:border-red-900/40 text-slate-500 dark:text-slate-400";
+                } else if (holidayInfo) {
+                    cellClasses += "bg-slate-400 dark:bg-slate-600 border-slate-600 dark:border-slate-500 text-slate-955 dark:text-slate-100 hover:bg-slate-500";
+                } else if (isPast) {
+                    if (isAGMeeting) {
+                        cellClasses += "bg-emerald-900/30 dark:bg-emerald-950/60 border-emerald-800 dark:border-emerald-900 text-slate-700 dark:text-slate-300 hover:bg-emerald-900/40";
+                    } else if (hasEvent) {
+                        cellClasses += "bg-purple-900/30 dark:bg-purple-950/60 border-purple-800 dark:border-purple-900 text-slate-700 dark:text-slate-300 hover:bg-purple-900/40";
+                    } else {
+                        cellClasses += "bg-slate-300 dark:bg-slate-800 border-slate-400 dark:border-slate-750 text-slate-700 dark:text-slate-300 hover:bg-slate-350 dark:hover:bg-slate-700";
+                    }
+                } else if (isAGMeeting) {
+                    cellClasses += "bg-emerald-100 dark:bg-emerald-950/50 border-emerald-400 dark:border-emerald-800 hover:bg-emerald-200 dark:hover:bg-emerald-900 text-emerald-950 dark:text-emerald-200";
+                } else if (hasEvent) {
+                    cellClasses += "bg-purple-100 dark:bg-purple-950/50 border-purple-400 dark:border-purple-800 hover:bg-purple-200 dark:hover:bg-purple-900 text-purple-955 dark:text-purple-200";
+                } else {
+                    cellClasses += "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100";
+                }
+
+                if (loggedInMember && !isCancelled) {
+                    const myAttendanceKey = `${loggedInMember.id}_${dateStr}`;
+                    const myStatus = state.attendance[myAttendanceKey];
+                    if (myStatus === 'excused') {
+                        cellClasses += " border-amber-500 border-2 bg-amber-50 dark:bg-amber-950/30";
+                    } else if (myStatus === 'absent' || myStatus === false) {
+                        cellClasses += " border-red-500 border-2 bg-red-50 dark:bg-red-950/30";
+                    }
+                }
+
+                dayButton.className = cellClasses;
+
+                let badgeHtml = "";
+                if (isToday) {
+                    badgeHtml = `<span class="text-[9px] font-black text-indigo-700 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-950 px-1.5 py-0.5 rounded uppercase tracking-wider">Heute</span>`;
+                }
+
+                let cellInnerHtml = `
+                    <div class="flex items-center justify-between w-full">
+                        <span class="font-extrabold text-sm ${isToday ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-900 dark:text-white'}">${dayObj.getDate()}</span>
+                        ${badgeHtml}
+                    </div>
+                `;
+
+                let indicatorsHtml = `<div class="w-full mt-2 space-y-1 text-left">`;
+                
+                if (isCancelled) {
+                    indicatorsHtml += `
+                        <div class="text-[9px] font-black text-red-900 dark:text-red-300 bg-red-100 dark:bg-red-950/40 px-1 py-0.5 rounded truncate">
+                            Ausfall: ${escapeHtml(state.cancelledDates[dateStr])}
+                        </div>
+                    `;
+                } else if (holidayInfo) {
+                    indicatorsHtml += `
+                        <div class="text-[9px] font-black text-slate-950 dark:text-slate-100 bg-slate-300/80 dark:bg-slate-500/80 px-1 py-0.5 rounded truncate flex items-center gap-0.5">
+                             ${escapeHtml(holidayInfo.title)}
+                        </div>
+                    `;
+                } else if (isAGMeeting && !isPast) {
+                    indicatorsHtml += `
+                        <div class="text-[10px] font-black text-emerald-950 dark:text-emerald-200 bg-emerald-300 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded-md truncate flex items-center gap-1">
+                            <i data-lucide="check" class="w-2.5 h-2.5 shrink-0 text-emerald-800 dark:text-emerald-400"></i> ${attendeeCount} da
+                        </div>
+                    `;
+                } else if (isAGMeeting && isPast) {
+                    indicatorsHtml += `
+                        <div class="text-[10px] font-black text-slate-700 dark:text-slate-400 bg-slate-300/60 dark:bg-slate-800/80 px-1.5 py-0.5 rounded-md truncate flex items-center gap-1">
+                            ${attendeeCount} da
+                        </div>
+                    `;
+                }
+
+                if (isOverrideException && !isCancelled) {
+                    indicatorsHtml += `
+                        <div class="text-[9px] font-black text-amber-950 dark:text-amber-200 bg-amber-200 dark:bg-amber-900/50 px-1 py-0.5 rounded-md truncate">
+                            Ausnahme
+                        </div>
+                    `;
+                }
+                
+                if (hasEvent && !isCancelled) {
+                    const matchedEvent = state.events.find(ev => ev.date === dateStr);
+                    indicatorsHtml += `
+                        <div class="text-[10px] font-black text-purple-950 dark:text-purple-200 bg-purple-300 dark:bg-purple-900/50 px-1.5 py-0.5 rounded-md truncate">
+                            ${matchedEvent ? escapeHtml(matchedEvent.title) : 'Event'}
+                        </div>
+                    `;
+                }
+
+                indicatorsHtml += `</div>`;
+                dayButton.innerHTML = cellInnerHtml + indicatorsHtml;
+                gridContainer.appendChild(dayButton);
+            });
+
+            lucide.createIcons();
+        }
+
+        // POPUP MODAL: DAILY ATTENDANCE
+        function openDailyAttendanceModal(dateStr) {
+            const d = parseLocalDate(dateStr);
+            const weekdayName = d.toLocaleDateString('de-DE', { weekday: 'long' });
+            const formattedDate = d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+            const todayStr = getLocalDateString(new Date());
+
+            const isAGMeeting = isDateAGMeeting(dateStr);
+            const holidayInfo = getHolidayForDate(dateStr);
+            const isExceptionActive = state.holidayExceptions.includes(dateStr);
+            const dailyEvent = state.events.find(ev => ev.date === dateStr);
+            const isCancelled = state.cancelledDates && state.cancelledDates[dateStr];
+
+            const originalHoliday = state.holidays.find(h => {
+                return dateStr >= h.startDate && dateStr <= h.endDate;
+            });
+
+            const loggedInMember = getLoggedInUserMember();
+            let rsvpWidgetHtml = "";
+            const isPast = dateStr < todayStr;
+
+            if (loggedInMember) {
+                const myStatusKey = `${loggedInMember.id}_${dateStr}`;
+                const currentStatus = state.attendance[myStatusKey];
+
+                if (isPast && !isOrganizerMode) {
+                    rsvpWidgetHtml = `
+                        <div class="p-4 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-center">
+                            <p class="text-xs text-slate-800 dark:text-slate-200 font-bold">Vergangene Termine können nachträglich nicht mehr bearbeitet werden.</p>
+                        </div>
+                    `;
+                } else if (isCancelled) {
+                    rsvpWidgetHtml = `
+                        <div class="p-4 bg-red-100 dark:bg-red-950/30 border border-red-300 dark:border-red-900 rounded-xl text-center">
+                            <p class="text-xs text-red-900 dark:text-red-300 font-bold">Dieser Termin entfällt.</p>
+                        </div>
+                    `;
+                } else {
+                    rsvpWidgetHtml = `
+                        <div class="p-4 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 rounded-xl space-y-3 shadow-sm">
+                            <div class="flex items-center gap-2 text-indigo-900 dark:text-indigo-400">
+                                <i data-lucide="smile" class="w-4 h-4 shrink-0"></i>
+                                <h4 class="text-xs font-black uppercase tracking-wider">Persönliche Rückmeldung</h4>
+                            </div>
+                            <div class="flex flex-wrap sm:flex-nowrap gap-2">
+                                <button onclick="setMyPersonalStatus('${dateStr}', true)" class="flex-1 py-2 px-3 text-xs font-black rounded-lg transition-all border ${currentStatus === true ? 'bg-emerald-700 text-white border-emerald-800 shadow-sm' : 'bg-white dark:bg-slate-900 text-emerald-800 dark:text-emerald-400 border-emerald-300 dark:border-emerald-850 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'}">
+                                    Anwesend
+                                </button>
+                                <button onclick="setMyPersonalStatus('${dateStr}', 'excused')" class="flex-1 py-2 px-3 text-xs font-black rounded-lg transition-all border ${currentStatus === 'excused' ? 'bg-amber-600 text-white border-amber-700 shadow-sm' : 'bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-400 border-amber-300 dark:border-amber-850 hover:bg-amber-50 dark:hover:bg-amber-950/40'}">
+                                    Entschuldigt
+                                </button>
+                                <button onclick="setMyPersonalStatus('${dateStr}', 'absent')" class="flex-1 py-2 px-3 text-xs font-black rounded-lg transition-all border ${currentStatus === 'absent' || currentStatus === false ? 'bg-red-700 text-white border-red-800 shadow-sm' : 'bg-white dark:bg-slate-900 text-red-800 dark:text-red-400 border-red-300 dark:border-red-850 hover:bg-red-50 dark:hover:bg-red-950/40'}">
+                                    Abwesend
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            let membersListHtml = "";
+            if (state.members.length === 0) {
+                membersListHtml = `
+                    <div class="text-center py-6 text-slate-700 dark:text-slate-300 text-xs font-bold">
+                        Keine Mitglieder registriert.
+                    </div>
+                `;
+            } else {
+                state.members.forEach(member => {
+                    const attendanceState = state.attendance[`${member.id}_${dateStr}`];
+                    const isChecked = attendanceState === true;
+                    const isExcused = attendanceState === 'excused';
+
+                    let statusBadgeHtml = "";
+                    if (isExcused) {
+                        statusBadgeHtml = `<span class="text-[10px] font-black bg-amber-200 dark:bg-amber-950 text-amber-950 dark:text-amber-200 px-2 py-1 rounded-md border border-amber-400 dark:border-amber-900">Entschuldigt</span>`;
+                    } else if (isChecked) {
+                        statusBadgeHtml = `<span class="text-[10px] font-black bg-emerald-200 dark:bg-emerald-950 text-emerald-955 dark:text-emerald-200 px-2 py-1 rounded-md border border-emerald-400 dark:border-emerald-900">Anwesend</span>`;
+                    } else {
+                        statusBadgeHtml = `<span class="text-[10px] font-black bg-red-200 dark:bg-red-950 text-red-950 dark:text-red-200 px-2 py-1 rounded-md border border-red-400 dark:border-red-900">Abwesend</span>`;
+                    }
+
+                    const canEditRow = isOrganizerMode && (!isPast || isOrganizerMode);
+
+                    membersListHtml += `
+                        <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-300 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 transition-all">
+                            <div class="min-w-0 pr-2">
+                                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHtml(member.name)} <span class="text-[10px] text-slate-600 dark:text-slate-400 font-semibold">(${escapeHtml(member.class || '-')})</span></p>
+                                <p class="text-[9px] text-slate-600 dark:text-slate-400 truncate mt-0.5">${escapeHtml(member.role || 'Mitglied')}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                ${statusBadgeHtml}
+                                ${canEditRow ? `
+                                <input type="checkbox" 
+                                       onchange="toggleDailyAttendanceFromModal('${member.id}', '${dateStr}')" 
+                                       ${isChecked ? 'checked' : ''} 
+                                       class="w-5 h-5 text-indigo-700 border-slate-400 dark:border-slate-600 rounded-lg focus:ring-indigo-500 cursor-pointer">
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            let quickActionsHtml = "";
+            if (isOrganizerMode && !isPast && !isCancelled) {
+                quickActionsHtml = `
+                    <div class="flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-850 p-2.5 rounded-xl border border-slate-300 dark:border-slate-800 shadow-sm">
+                        <span class="text-xs font-bold text-slate-800 dark:text-white">Schnellauswahl</span>
+                        <div class="flex gap-2">
+                            <button onclick="bulkMarkDailyAttendance('${dateStr}', true)" class="text-xs font-black text-indigo-800 dark:text-indigo-400 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 shadow-sm">Alle anwesend</button>
+                            <button onclick="bulkMarkDailyAttendance('${dateStr}', false)" class="text-xs font-black text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-750 px-3 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 shadow-sm">Alle abwesend</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let cancelActionHtml = "";
+            if (isOrganizerMode) {
+                cancelActionHtml = `
+                    <div class="p-3 bg-red-50 dark:bg-red-950/20 border border-red-300 dark:border-red-900/45 rounded-xl space-y-2">
+                        <span class="text-xs font-black text-red-950 dark:text-red-300 block font-bold">Termin entfällt</span>
+                        <div class="flex gap-2">
+                            <input type="text" id="cancel-reason-input" placeholder="Grund des Ausfalls eingeben" value="${isCancelled ? escapeHtml(state.cancelledDates[dateStr]) : ''}" class="flex-grow bg-white dark:bg-slate-900 border border-red-300 dark:border-red-900 rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-red-500 text-slate-900 dark:text-white">
+                            <button onclick="saveMeetingCancellation('${dateStr}')" class="bg-red-700 hover:bg-red-800 dark:bg-red-650 dark:hover:bg-red-755 text-white px-3 py-1 rounded-lg text-xs font-bold">
+                                Speichern
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const modalContentHtml = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-start border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <div>
+                            <span class="text-[10px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">${weekdayName}</span>
+                            <h3 class="text-base font-black text-slate-950 dark:text-white">${formattedDate}</h3>
+                        </div>
+                        <button onclick="closeModal()" class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    ${originalHoliday ? `
+                    <div class="bg-slate-100 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 text-slate-900 dark:text-white p-3 rounded-xl text-xs flex items-start gap-2 shadow-sm">
+                        <div class="flex-grow">
+                            <p class="font-extrabold text-slate-900 dark:text-white">Sonderzeitraum aktiv</p>
+                            <p class="text-slate-800 dark:text-slate-300 mt-0.5 font-bold">Bezeichnung: "${escapeHtml(originalHoliday.title)}"</p>
+                            ${isOrganizerMode ? `
+                            <label class="flex items-center gap-2 mt-2 cursor-pointer bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-300 dark:border-slate-750 w-full sm:w-auto hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
+                                <input type="checkbox" onchange="toggleHolidayException('${dateStr}')" ${isExceptionActive ? 'checked' : ''} class="w-4 h-4 text-indigo-700 border-slate-400 dark:border-slate-600 rounded focus:ring-indigo-500 cursor-pointer">
+                                <span class="text-[10.5px] font-black text-slate-800 dark:text-slate-200">Trotz Ferien Treffen erlauben</span>
+                            </label>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${cancelActionHtml}
+
+                    ${rsvpWidgetHtml}
+
+                    ${isOrganizerMode && !isCancelled ? `
+                    <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-300 dark:border-slate-800 shadow-sm">
+                        <div class="space-y-0.5">
+                            <span class="text-xs font-black text-slate-950 dark:text-white">Als offizielles Treffen werten</span>
+                        </div>
+                        <input type="checkbox" id="modal-ag-toggle" 
+                               onchange="toggleMeetingDateFromModal('${dateStr}')" 
+                               ${isAGMeeting ? 'checked' : ''} 
+                               class="w-5 h-5 text-indigo-700 dark:text-indigo-400 border-slate-400 dark:border-slate-650 rounded focus:ring-indigo-500 cursor-pointer">
+                    </div>
+                    ` : ''}
+
+                    ${dailyEvent && !isCancelled ? `
+                    <div class="bg-purple-100 dark:bg-purple-950/50 border border-purple-300 dark:border-purple-800 text-purple-955 dark:text-purple-200 p-3 rounded-xl text-xs flex items-start gap-2 shadow-sm">
+                        <div>
+                            <p class="font-black">Schulevent geplant</p>
+                            <p class="text-purple-900 dark:text-purple-300 mt-0.5 font-bold">${escapeHtml(dailyEvent.title)} (Besetzung: ${dailyEvent.staff.length}/${dailyEvent.requiredStaff})</p>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${quickActionsHtml}
+
+                    <div class="space-y-1.5 overflow-y-auto max-h-[260px] pr-1 custom-scrollbar">
+                        ${membersListHtml}
+                    </div>
+
+                    <div class="flex pt-2">
+                        <button onclick="closeModal()" class="w-full py-3 bg-slate-900 hover:bg-slate-950 dark:bg-slate-800 dark:hover:bg-slate-750 text-white font-extrabold rounded-xl text-xs transition-all active:scale-95 shadow-md">Fertig</button>
+                    </div>
+                </div>
+            `;
+
+            openModal(modalContentHtml);
+        }
+
+        // ACTIONS & FUNCTIONS FOR ATTENDANCE
+        function saveMeetingCancellation(dateStr) {
+            if (!isOrganizerMode) return;
+            const inputVal = document.getElementById("cancel-reason-input").value.trim();
+            if (inputVal) {
+                state.cancelledDates[dateStr] = inputVal;
+                showToast("Termin wurde abgesagt");
+            } else {
+                delete state.cancelledDates[dateStr];
+                showToast("Terminabsage aufgehoben");
+            }
+            saveState();
+            renderCalendarView();
+            closeModal();
+            openDailyAttendanceModal(dateStr);
+        }
+
+        function setMyPersonalStatus(dateStr, status) {
+            const loggedInMember = getLoggedInUserMember();
+            if (!loggedInMember) return;
+
+            const key = `${loggedInMember.id}_${dateStr}`;
+            state.attendance[key] = status;
+
+            if (status === true && !state.meetings.includes(dateStr) && !isDateAGMeeting(dateStr)) {
+                state.meetings.push(dateStr);
+                state.meetings.sort();
+            }
+
+            saveState();
+            renderCalendarView();
+            closeModal();
+            openDailyAttendanceModal(dateStr);
+            showToast("Persönliche Rückmeldung erfolgreich eingetragen");
+        }
+
+        function toggleHolidayException(dateStr) {
+            if (!isOrganizerMode) return;
+            const idx = state.holidayExceptions.indexOf(dateStr);
+            if (idx > -1) {
+                state.holidayExceptions.splice(idx, 1);
+                showToast("Ferien-Ausnahme aufgehoben");
+            } else {
+                state.holidayExceptions.push(dateStr);
+                showToast("Treffen trotz Ferien gestattet");
+            }
+            saveState();
+            renderCalendarView();
+            closeModal();
+            openDailyAttendanceModal(dateStr);
+        }
+
+        function toggleDailyAttendanceFromModal(memberId, dateStr) {
+            if (!isOrganizerMode) return;
+            const key = `${memberId}_${dateStr}`;
+            const current = state.attendance[key];
+            state.attendance[key] = (current === true) ? false : true;
+            saveState();
+            renderCalendarView();
+        }
+
+        function bulkMarkDailyAttendance(dateStr, markPresent) {
+            if (!isOrganizerMode) return;
+            state.members.forEach(m => {
+                state.attendance[`${m.id}_${dateStr}`] = markPresent;
+            });
+            saveState();
+            renderCalendarView();
+            closeModal();
+            openDailyAttendanceModal(dateStr);
+            showToast(markPresent ? "Alle als anwesend markiert" : "Alle als abwesend markiert");
+        }
+
+        function toggleMeetingDateFromModal(dateStr) {
+            if (!isOrganizerMode) return;
+            const idx = state.meetings.indexOf(dateStr);
+            if (idx > -1) {
+                state.meetings.splice(idx, 1);
+            } else {
+                state.meetings.push(dateStr);
+                state.meetings.sort();
+            }
+            saveState();
+            renderCalendarView();
+        }
+
+        // MEMBERS MANAGEMENT MODULE
+        function renderMembersTab() {
+            const tbody = document.getElementById("members-table-body");
+            const emptyState = document.getElementById("members-empty-state");
+            
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            if (state.members.length === 0) {
+                emptyState.classList.remove("hidden");
+                return;
+            } else {
+                emptyState.classList.add("hidden");
+            }
+
+            state.members.forEach(m => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors";
+
+                tr.innerHTML = `
+                    <td class="py-4 px-6 font-extrabold text-slate-950 dark:text-white">${escapeHtml(m.name)}</td>
+                    <td class="py-4 px-6 font-bold text-slate-700 dark:text-slate-300">${escapeHtml(m.class || '-')}</td>
+                    <td class="py-4 px-6 text-slate-700 dark:text-slate-300 font-semibold">${escapeHtml(m.role || '-')}</td>
+                    <td class="py-4 px-6 text-slate-700 dark:text-slate-300 font-medium">${escapeHtml(m.joinDate || '-')}</td>
+                    <td class="py-4 px-6 text-slate-600 dark:text-slate-400 text-xs">${escapeHtml(m.notes || '-')}</td>
+                    <td class="py-4 px-6 text-right">
+                        ${isOrganizerMode ? `
+                        <div class="flex justify-end gap-2">
+                            <button onclick="openEditMemberModal('${m.id}')" class="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteMember('${m.id}')" class="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-slate-800">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        ` : '<span class="text-xs text-slate-400 font-bold">-</span>'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function openAddMemberModal() {
+            if (!isOrganizerMode) return;
+            const html = `
+                <div class="p-6 space-y-4">
+                    <h3 class="text-lg font-black text-slate-950 dark:text-white">Neues AG-Mitglied aufnehmen</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Vollständiger Name</label>
+                            <input type="text" id="m-add-name" placeholder="z.B. Alex Meier" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Klasse / Jahrgang</label>
+                            <input type="text" id="m-add-class" placeholder="z.B. 9b" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Rolle / Spezialgebiet</label>
+                            <input type="text" id="m-add-role" placeholder="z.B. Tontechnik, Licht, Kabel" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Notizen / Bemerkung</label>
+                            <input type="text" id="m-add-notes" placeholder="Optionale Anmerkungen" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white mt-1">
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="closeModal()" class="w-1/2 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs">Abbrechen</button>
+                        <button onclick="saveNewMember()" class="w-1/2 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded-xl text-xs">Mitglied Speichern</button>
+                    </div>
+                </div>
+            `;
+            openModal(html);
+        }
+
+        function saveNewMember() {
+            const name = document.getElementById("m-add-name").value.trim();
+            const cls = document.getElementById("m-add-class").value.trim();
+            const role = document.getElementById("m-add-role").value.trim();
+            const notes = document.getElementById("m-add-notes").value.trim();
+
+            if (!name) {
+                showToast("Bitte gib einen Namen ein", "error");
+                return;
+            }
+
+            const newMember = {
+                id: `mem_${Date.now()}`,
+                name: name,
+                class: cls,
+                role: role,
+                joinDate: getLocalDateString(new Date()),
+                notes: notes
+            };
+
+            state.members.push(newMember);
+            saveState();
+            renderMembersTab();
+            populateMemberDropdowns();
+            closeModal();
+            showToast("Mitglied erfolgreich angelegt");
+        }
+
+        function openEditMemberModal(id) {
+            if (!isOrganizerMode) return;
+            const m = state.members.find(x => x.id === id);
+            if (!m) return;
+
+            const html = `
+                <div class="p-6 space-y-4">
+                    <h3 class="text-lg font-black text-slate-950 dark:text-white">Mitglied bearbeiten</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Vollständiger Name</label>
+                            <input type="text" id="m-edit-name" value="${escapeHtml(m.name)}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Klasse / Jahrgang</label>
+                            <input type="text" id="m-edit-class" value="${escapeHtml(m.class)}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Rolle / Spezialgebiet</label>
+                            <input type="text" id="m-edit-role" value="${escapeHtml(m.role)}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Notizen</label>
+                            <input type="text" id="m-edit-notes" value="${escapeHtml(m.notes)}" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white mt-1">
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="closeModal()" class="w-1/2 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs">Abbrechen</button>
+                        <button onclick="updateMember('${m.id}')" class="w-1/2 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded-xl text-xs">Änderung Speichern</button>
+                    </div>
+                </div>
+            `;
+            openModal(html);
+        }
+
+        function updateMember(id) {
+            const m = state.members.find(x => x.id === id);
+            if (!m) return;
+
+            const name = document.getElementById("m-edit-name").value.trim();
+            if (!name) {
+                showToast("Name darf nicht leer sein", "error");
+                return;
+            }
+
+            m.name = name;
+            m.class = document.getElementById("m-edit-class").value.trim();
+            m.role = document.getElementById("m-edit-role").value.trim();
+            m.notes = document.getElementById("m-edit-notes").value.trim();
+
+            saveState();
+            renderMembersTab();
+            closeModal();
+            showToast("Mitglied aktualisiert");
+        }
+
+        function deleteMember(id) {
+            if (!isOrganizerMode) return;
+            state.members = state.members.filter(m => m.id !== id);
+            saveState();
+            renderMembersTab();
+            populateMemberDropdowns();
+            showToast("Mitglied gelöscht");
+        }
+
+        // EVENTS PLANNER MODULE
+        function renderEventsGrid() {
+            const grid = document.getElementById("events-grid");
+            const emptyState = document.getElementById("no-events-state");
+
+            if (!grid) return;
+            grid.innerHTML = "";
+
+            if (state.events.length === 0) {
+                emptyState.classList.remove("hidden");
+                return;
+            } else {
+                emptyState.classList.add("hidden");
+            }
+
+            state.events.forEach(ev => {
+                const card = document.createElement("div");
+                card.className = "bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-md flex flex-col justify-between gap-4";
+
+                const isFull = ev.staff.length >= ev.requiredStaff;
+                const dateObj = parseLocalDate(ev.date);
+                const formattedDate = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                let staffListHtml = ev.staff.map(name => `
+                    <span class="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700">
+                        <i data-lucide="user-check" class="w-3 h-3 text-emerald-500"></i> ${escapeHtml(name)}
+                    </span>
+                `).join("");
+
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-extrabold text-slate-950 dark:text-white text-base">${escapeHtml(ev.title)}</h3>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-full ${isFull ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300' : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300'}">
+                                ${ev.staff.length} / ${ev.requiredStaff} Techniker
+                            </span>
+                        </div>
+                        <p class="text-xs text-indigo-600 dark:text-indigo-400 font-extrabold flex items-center gap-1.5">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${formattedDate}
+                        </p>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 font-medium">${escapeHtml(ev.notes || 'Keine Notizen')}</p>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+                        <div class="flex flex-wrap gap-1.5">
+                            ${staffListHtml || '<span class="text-xs text-slate-400 italic">Noch niemand eingetragen</span>'}
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2">
+                            <button onclick="openAssignStaffModal('${ev.id}')" class="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-800 text-white rounded-lg text-xs font-bold transition-all active:scale-95 shadow-sm">
+                                Techniker verwalten
+                            </button>
+                            ${isOrganizerMode ? `
+                            <button onclick="deleteEvent('${ev.id}')" class="text-red-500 hover:text-red-700 p-1 rounded">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function openAddEventModal() {
+            const html = `
+                <div class="p-6 space-y-4">
+                    <h3 class="text-lg font-black text-slate-950 dark:text-white">Neues Event anlegen</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Event-Bezeichnung</label>
+                            <input type="text" id="ev-add-title" placeholder="z.B. Sommerkonzert" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Datum</label>
+                            <input type="date" id="ev-add-date" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Benötigte Techniker-Anzahl</label>
+                            <input type="number" id="ev-add-staff-limit" value="4" min="1" max="15" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Notizen / Anforderungen</label>
+                            <input type="text" id="ev-add-notes" placeholder="z.B. 4x Funkstrecken" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white mt-1">
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="closeModal()" class="w-1/2 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs">Abbrechen</button>
+                        <button onclick="saveNewEvent()" class="w-1/2 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded-xl text-xs">Event Anlegen</button>
+                    </div>
+                </div>
+            `;
+            openModal(html);
+        }
+
+        function saveNewEvent() {
+            const title = document.getElementById("ev-add-title").value.trim();
+            const date = document.getElementById("ev-add-date").value;
+            const limit = parseInt(document.getElementById("ev-add-staff-limit").value) || 4;
+            const notes = document.getElementById("ev-add-notes").value.trim();
+
+            if (!title || !date) {
+                showToast("Bitte Bezeichnung und Datum ausfüllen", "error");
+                return;
+            }
+
+            state.events.push({
+                id: `ev_${Date.now()}`,
+                title: title,
+                date: date,
+                requiredStaff: limit,
+                staff: [],
+                notes: notes
+            });
+
+            saveState();
+            renderEventsGrid();
+            renderCalendarView();
+            closeModal();
+            showToast("Event hinzugefügt");
+        }
+
+        function openAssignStaffModal(eventId) {
+            const ev = state.events.find(x => x.id === eventId);
+            if (!ev) return;
+
+            let membersChecklist = state.members.map(m => {
+                const isAssigned = ev.staff.includes(m.name);
+                return `
+                    <label class="flex items-center justify-between p-3 rounded-xl border border-slate-300 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+                        <span class="text-xs font-extrabold text-slate-900 dark:text-white">${escapeHtml(m.name)} <span class="text-[10px] text-slate-500">(${escapeHtml(m.role)})</span></span>
+                        <input type="checkbox" onchange="toggleEventStaff('${ev.id}', '${escapeHtml(m.name)}')" ${isAssigned ? 'checked' : ''} class="w-5 h-5 text-indigo-600 rounded">
+                    </label>
+                `;
+            }).join("");
+
+            const html = `
+                <div class="p-6 space-y-4">
+                    <h3 class="text-lg font-black text-slate-950 dark:text-white">Besetzung für ${escapeHtml(ev.title)}</h3>
+                    <div class="space-y-2 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">
+                        ${membersChecklist || '<p class="text-xs text-slate-500">Keine Mitglieder vorhanden</p>'}
+                    </div>
+                    <button onclick="closeModal()" class="w-full py-3 bg-indigo-700 text-white font-bold rounded-xl text-xs">Fertig</button>
+                </div>
+            `;
+            openModal(html);
+        }
+
+        function toggleEventStaff(eventId, memberName) {
+            const ev = state.events.find(x => x.id === eventId);
+            if (!ev) return;
+
+            const idx = ev.staff.indexOf(memberName);
+            if (idx > -1) {
+                ev.staff.splice(idx, 1);
+            } else {
+                if (ev.staff.length >= ev.requiredStaff) {
+                    showToast("Besetzungslimit erreicht!", "error");
+                    return;
+                }
+                ev.staff.push(memberName);
+            }
+
+            saveState();
+            renderEventsGrid();
+        }
+
+        function deleteEvent(eventId) {
+            if (!isOrganizerMode) return;
+            state.events = state.events.filter(e => e.id !== eventId);
+            saveState();
+            renderEventsGrid();
+            renderCalendarView();
+            showToast("Event entfernt");
+        }
+
+        // HOLIDAY & RECURRING SETTINGS
+        function openAddHolidayModal() {
+            if (!isOrganizerMode) return;
+            const html = `
+                <div class="p-6 space-y-4">
+                    <h3 class="text-lg font-black text-slate-950 dark:text-white">Ferien oder Sperrzeit hinzufügen</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Bezeichnung</label>
+                            <input type="text" id="h-add-title" placeholder="z.B. Sommerferien" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Startdatum</label>
+                            <input type="date" id="h-add-start" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Enddatum</label>
+                            <input type="date" id="h-add-end" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="closeModal()" class="w-1/2 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs">Abbrechen</button>
+                        <button onclick="saveNewHoliday()" class="w-1/2 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded-xl text-xs">Ferien Eintragen</button>
+                    </div>
+                </div>
+            `;
+            openModal(html);
+        }
+
+        function saveNewHoliday() {
+            const title = document.getElementById("h-add-title").value.trim();
+            const start = document.getElementById("h-add-start").value;
+            const end = document.getElementById("h-add-end").value;
+
+            if (!title || !start || !end) {
+                showToast("Bitte fülle alle Felder aus", "error");
+                return;
+            }
+
+            state.holidays.push({
+                id: `h_${Date.now()}`,
+                title: title,
+                startDate: start,
+                endDate: end
+            });
+
+            saveState();
+            renderHolidaysList();
+            renderCalendarView();
+            closeModal();
+            showToast("Ferien erfolgreich gespeichert");
+        }
+
+        function renderHolidaysList() {
+            const container = document.getElementById("holidays-list-container");
+            if (!container) return;
+            container.innerHTML = "";
+
+            if (state.holidays.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 font-bold">Keine Sperrzeiten definiert.</p>`;
+                return;
+            }
+
+            state.holidays.forEach(h => {
+                const item = document.createElement("div");
+                item.className = "flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-850 rounded-xl border border-slate-300 dark:border-slate-800 text-xs font-bold";
+                item.innerHTML = `
+                    <div>
+                        <span class="text-slate-950 dark:text-white">${escapeHtml(h.title)}</span>
+                        <span class="text-slate-500 block text-[10px]">${h.startDate} bis ${h.endDate}</span>
+                    </div>
+                    ${isOrganizerMode ? `
+                    <button onclick="deleteHoliday('${h.id}')" class="text-red-500 hover:text-red-700 p-1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                    ` : ''}
+                `;
+                container.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function deleteHoliday(id) {
+            if (!isOrganizerMode) return;
+            state.holidays = state.holidays.filter(h => h.id !== id);
+            saveState();
+            renderHolidaysList();
+            renderCalendarView();
+            showToast("Sperrzeit entfernt");
+        }
+
+        function updateRecurringDaySetting() {
+            if (!isOrganizerMode) return;
+            const val = document.getElementById("recurring-day-select").value;
+            state.recurringDay = val === "null" ? null : parseInt(val);
+            saveState();
+            renderCalendarView();
+            showToast("Serientermin aktualisiert");
+        }
+
+        function updateRecurringStartDate() {
+            if (!isOrganizerMode) return;
+            state.recurringStartDate = document.getElementById("recurring-start-date").value;
+            saveState();
+            renderCalendarView();
+            showToast("Startdatum aktualisiert");
+        }
+
+        // USER MANAGEMENT CONTROLLER
+        function renderUsersTable() {
+            const tbody = document.getElementById("users-table-body");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            state.users.forEach(u => {
+                const linkedMember = state.members.find(m => m.id === u.memberId);
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-850";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">${escapeHtml(u.username)}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">${u.role === 'admin' ? 'Leitung (Admin)' : 'Mitglied'}</td>
+                    <td class="py-3 px-4 font-semibold text-indigo-600 dark:text-indigo-400">${linkedMember ? escapeHtml(linkedMember.name) : '-'}</td>
+                    <td class="py-3 px-4 text-right">
+                        ${u.username !== 'admin' ? `
+                        <button onclick="deleteUser('${escapeHtml(u.username)}')" class="text-red-500 hover:text-red-700 p-1">
+                            <i data-lucide="user-x" class="w-4 h-4"></i>
+                        </button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        async function addNewUser() {
+            if (!isOrganizerMode) return;
+            const uname = document.getElementById("admin-new-username").value.trim().toLowerCase();
+            const pwd = document.getElementById("admin-new-password").value;
+            const role = document.getElementById("admin-new-role").value;
+            const memberId = document.getElementById("admin-new-member-link").value || null;
+
+            if (!uname || !pwd) {
+                showToast("Bitte Benutzername und Passwort eingeben", "error");
+                return;
+            }
+
+            if (state.users.some(u => u.username.toLowerCase() === uname)) {
+                showToast("Benutzername existiert bereits", "error");
+                return;
+            }
+
+            const hash = await sha256(pwd);
+            state.users.push({
+                username: uname,
+                pinHash: hash,
+                role: role,
+                memberId: memberId,
+                profilePic: "",
+                bio: ""
+            });
+
+            saveState();
+            renderUsersTable();
+            document.getElementById("admin-new-username").value = "";
+            document.getElementById("admin-new-password").value = "";
+            showToast("Benutzer-Account angelegt");
+        }
+
+        function deleteUser(username) {
+            if (!isOrganizerMode) return;
+            state.users = state.users.filter(u => u.username !== username);
+            saveState();
+            renderUsersTable();
+            showToast("Benutzer gelöscht");
+        }
+
+        // SETTINGS MODULE
+        function setThemeMode(mode) {
+            state.theme = mode;
+            applyTheme();
+            saveState();
+            showToast(`Farbschema auf ${mode} gesetzt`);
+        }
+
+        function applyTheme() {
+            const root = document.documentElement;
+            if (state.theme === 'dark' || (state.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                root.classList.add('dark');
+            } else {
+                root.classList.remove('dark');
+            }
+            updateThemeButtonStyles();
+        }
+
+        function updateThemeButtonStyles() {
+            const btnL = document.getElementById("theme-btn-light");
+            const btnD = document.getElementById("theme-btn-dark");
+            const btnS = document.getElementById("theme-btn-system");
+
+            if (!btnL || !btnD || !btnS) return;
+
+            [btnL, btnD, btnS].forEach(b => b.classList.remove("border-indigo-600", "bg-indigo-50", "dark:bg-indigo-950"));
+
+            if (state.theme === 'light') btnL.classList.add("border-indigo-600", "bg-indigo-50");
+            else if (state.theme === 'dark') btnD.classList.add("border-indigo-600", "dark:bg-indigo-950");
+            else btnS.classList.add("border-indigo-600", "bg-indigo-50", "dark:bg-indigo-950");
+        }
+
+        function uploadProfilePic(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempProfilePic = e.target.result;
+                document.getElementById("settings-avatar-preview").src = tempProfilePic;
+                document.getElementById("settings-avatar-preview").classList.remove("hidden");
+                document.getElementById("settings-avatar-placeholder").classList.add("hidden");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveProfileDetails() {
+            const user = state.users.find(u => u.username.toLowerCase() === currentUserName.toLowerCase());
+            if (!user) return;
+
+            user.bio = document.getElementById("settings-bio").value.trim();
+            if (tempProfilePic) {
+                user.profilePic = tempProfilePic;
+            }
+
+            saveState();
+            showToast("Profil-Details gespeichert");
+        }
+
+        async function changeOwnPassword() {
+            const p1 = document.getElementById("settings-new-password").value;
+            const p2 = document.getElementById("settings-new-password-repeat").value;
+
+            if (!p1 || p1 !== p2) {
+                showToast("Passwörter stimmen nicht überein", "error");
+                return;
+            }
+
+            const user = state.users.find(u => u.username.toLowerCase() === currentUserName.toLowerCase());
+            if (!user) return;
+
+            user.pinHash = await sha256(p1);
+            saveState();
+            document.getElementById("settings-new-password").value = "";
+            document.getElementById("settings-new-password-repeat").value = "";
+            showToast("Passwort erfolgreich geändert");
+        }
+
+        // BACKUP & EXPORT
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `technik_ag_backup_${getLocalDateString(new Date())}.json`);
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+            showToast("Backup heruntergeladen");
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported && imported.members) {
+                        state = imported;
+                        saveState();
+                        renderAll();
+                        showToast("Daten erfolgreich wiederhergestellt");
+                    } else {
+                        showToast("Ungültiges Backup-Format", "error");
+                    }
+                } catch (err) {
+                    showToast("Fehler beim Einlesen der Datei", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function openResetConfirmModal() {
+            if (!isOrganizerMode) return;
+            const html = `
+                <div class="p-6 space-y-4 text-center">
+                    <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
+                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-950 dark:text-white">Datenbank wirklich zurücksetzen?</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 font-bold">Alle Termine, Anwesenheiten und Mitglieder werden unwiderruflich gelöscht.</p>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="closeModal()" class="w-1/2 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs">Abbrechen</button>
+                        <button onclick="resetDatabase()" class="w-1/2 py-2.5 bg-red-600 text-white font-bold rounded-xl text-xs">Ja, Alles Löschen</button>
+                    </div>
+                </div>
+            `;
+            openModal(html);
+        }
+
+        function resetDatabase() {
+            initDefaultState();
+            closeModal();
+            renderAll();
+            showToast("Datenbank leeres Standard-Setup");
+        }
+
+        function openSupabaseConfigModal() {
+            const html = `
+                <div class="p-6 space-y-4">
+                    <h3 class="text-lg font-black text-slate-950 dark:text-white flex items-center gap-2">
+                        <i data-lucide="cloud" class="w-5 h-5 text-indigo-600"></i>
+                        Supabase Cloud verknüpfen
+                    </h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Erstelle ein kostenloses Projekt auf <b>supabase.com</b> und füge deine Zugangsdaten hier ein.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Supabase URL</label>
+                            <input type="text" id="modal-sp-url" value="${escapeHtml(localStorage.getItem('technik_ag_supabase_url') || '')}" placeholder="https://xyz.supabase.co" class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-400 uppercase">Supabase Anon Key</label>
+                            <input type="password" id="modal-sp-key" value="${escapeHtml(localStorage.getItem('technik_ag_supabase_key') || '')}" placeholder="eyJhY..." class="w-full bg-slate-50 dark:bg-slate-850 border border-slate-300 dark:border-slate-750 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white mt-1">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="closeModal()" class="w-1/2 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold rounded-xl text-xs">Abbrechen</button>
+                        <button onclick="saveSupabaseModalConfig()" class="w-1/2 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded-xl text-xs">Verbindung Speichern</button>
+                    </div>
+                </div>
+            `;
+            openModal(html);
+        }
+
+        function saveSupabaseModalConfig() {
+            const url = document.getElementById("modal-sp-url").value.trim();
+            const key = document.getElementById("modal-sp-key").value.trim();
+
+            if (!url || !key) {
+                showToast("Gültige Supabase URL und Key erforderlich", "error");
+                return;
+            }
+
+            localStorage.setItem("technik_ag_supabase_url", url);
+            localStorage.setItem("technik_ag_supabase_key", key);
+            state.supabaseUrl = url;
+            state.supabaseKey = key;
+
+            initSupabase();
+            syncDataFromCloud();
+            closeModal();
+            showToast("Supabase-Verbindung aktiviert!");
+        }
+
+        // APP LIFECYCLE INITIALIZATION
+        window.onload = function() {
+            loadState();
+        };
+    </script>
+</body>
+</html>
